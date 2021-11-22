@@ -1,0 +1,41 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Voy a cargar una serie de datos para ejemplificar los problemas del kmeans.
+
+El primero es la dependencia de la aprtición inicial del resultado. Quiero coger unos datos que sean buenos para el kmeans y enseñar como en varias simulaciones da resultados muy diferentes
+
+```{r}
+source("1_setup.R")
+X<-read.arff('data/artificial/2d-3c-no123.arff')
+k<-nlevels(X$class)
+source("km-kmpp.R")
+X <- km_clustering(X,k)
+
+
+plot_good <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
+grid.arrange(plot_bad,plot_good,ncol=2)
+```
+Así puedo ver una aprticipn mala que consegui repitiendo el kmeans (esta guardada como plot_bad) con otra mejor.
+
+Otro problema del kmeans es la detección de formas no circulares, así que un par de imágenes de clusters con formas no circulares estaría bien
+
+```{r}
+source("1_setup.R")
+X<-read.arff('data/artificial/complex9.arff')
+k<-nlevels(X$class)
+source("km-kmpp.R")
+X <- km_clustering(X,k)
+grid.arrange(ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)),
+             ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)),
+             ncol=2)
+
+
+```
+
+
+
+
+pensar más fallos del kmeans (otro posible ejemplo es el de las espirales, o banana data)

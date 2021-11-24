@@ -12,3 +12,4 @@ library('cluster')
 library('dbscan')
 #pintar graficas una al lado de otra
 library('gridExtra')
+library('grid')

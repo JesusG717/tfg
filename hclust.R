@@ -6,5 +6,6 @@ h_clustering <- function(X,method){
   #conseguir una particion concreta
   partition_h<-cutree(C_h,k)
   X <- mutate(X, hc = factor(partition_h))
+ 
   return(X)
 }

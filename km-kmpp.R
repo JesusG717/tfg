@@ -3,6 +3,7 @@
 km_clustering <- function(X,k){
   C_km<- X %>% select(c(1,2)) %>% kmeans(k)
   #lo mismo pero con kmeans++
+  
   C_kpp<- X %>% select(c(1,2)) %>% kmeanspp(k)
   #Voy a pintar el clustering que me da el algoritmo
   #primero creo una variable que asigne la clase de cada cluster en X
@@ -11,3 +12,14 @@ km_clustering <- function(X,k){
   
   return(X)
 }
+
+km_clustering_custom <- function(X,c){
+  C_km<- X %>% select(c(1,2)) %>% kmeans(c)
+  
+  #primero creo una variable que asigne la clase de cada cluster en X
+  X <- mutate(X, km = factor(C_km$cluster))
+  
+  
+  return(X)
+}
+

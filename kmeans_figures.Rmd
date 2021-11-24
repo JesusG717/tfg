@@ -11,12 +11,25 @@ El primero es la dependencia de la aprtición inicial del resultado. Quiero coge
 source("1_setup.R")
 X<-read.arff('data/artificial/2d-3c-no123.arff')
 k<-nlevels(X$class)
+k
 source("km-kmpp.R")
+#Cojo un centro en cada cluster en luagr de dar k
+c1 <- X %>% filter(X[1]>-1.96 & X[1]< -1.95) %>% select(c(1,2))
+c1 <- c(c1$a0,c1$a1)
+c2 <- X %>% filter(X[1]>-1.01 & X[1]< -1) %>% select(c(1,2))
+c2 <- c(c2$a0,c2$a1)
+c3 <- X %>% filter(X[1] > 1.34591999 & X[1] < 1.34592001) %>% select(c(1,2))
+c3 <- c(c3$a0,c3$a1)
+c_bad <- rbind(c1,c2,c3)
+X <- km_clustering_custom(X,c_good)
+plot_bad <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clsutering", colour = "Clusters", xlab = FALSE, ylab = FALSE)
+#Cojo dos centros en el cluster ciruclar
+
 X <- km_clustering(X,k)
-
-
-plot_good <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
-grid.arrange(plot_bad,plot_good,ncol=2)
+plot_good <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clsutering", colour = "Clusters", label = FALSE)
+grid.arrange(plot_bad,plot_good,
+             ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters"),
+             ncol=3)
 ```
 Así puedo ver una aprticipn mala que consegui repitiendo el kmeans (esta guardada como plot_bad) con otra mejor.
 

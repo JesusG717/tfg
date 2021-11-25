@@ -1,7 +1,7 @@
 #cargar paquetes
 source("1_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/3-spiral.arff'
+dataset<-'data/artificial/diamond9.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos
@@ -16,9 +16,10 @@ source("km-kmpp.R")
 X <- km_clustering(X,k)
 #solucion del kmeans
 plot_km <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
+plot_km
 #solucion kmeanspp
 plot_kmpp <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = kpp))
-
+plot_kmpp
 
 #Hago partición para el jerarquico
 source("hclust.R")
@@ -27,7 +28,7 @@ method<-'single' #metodos: complete, single, average, centroids
 X <- h_clustering(X,method)
 #solucion del jerarquico
 plot_h <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc))
-
+plot_h
 
 #Hago el fuzy clustering 
 #este no lo hice en un script separado porque es diferente a los otros y no se muy bien como hacerlo

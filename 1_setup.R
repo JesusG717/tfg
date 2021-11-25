@@ -13,3 +13,5 @@ library('dbscan')
 #pintar graficas una al lado de otra
 library('gridExtra')
 library('grid')
+#para poner graficas juntas
+library('patchwork')

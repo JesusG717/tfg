@@ -1,7 +1,10 @@
+#Aqui escribo/pruebo los programas antes de hacer un script específico
+
+
 #cargar paquetes
 source("1_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/diamond9.arff'
+dataset<-'data/artificial/zelnik3.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos
@@ -39,6 +42,22 @@ C_f<- X %>% select(c(1,2)) %>% Fclust(k,type)
 #mirar todas las opciones del paquete fclust para ver como pintar cosas diferente
 plot.fclust(C_f,umin=0.3,ucex = TRUE, pca = FALSE)
 
+#dbscan (ahora funciona pero no se muy bien que valores de MinPts y epsiloin poner)
+epsilon <- 0.1 #bastante arbitrario de momento
+MinPts <- 4 #numero variables*2
+C_dbs <- X %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
+X <- mutate(X, dbs = factor(C_dbs$cluster))
+plot_dbs <- ggplot(data = X) + geom_point(mapping = aes(x = X[,1], y = X[,2], colour = dbs))
+plot_dbs
+
+
+#prueba de optics (aun tengo que ver como representarlo diferente al resto)
+opt <- X %>% select(c(1,2)) %>% optics(,minPts = 4)
+C_opt<-extractDBSCAN(opt,0.1)
+X <- mutate(X, opt = factor(C_opt$cluster))
+ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = opt))
+
+#el dscan parece mas sensible al epsilon que el optics, tengo que mirarlo con calma
 
 #voy a probar el jerarquico con densidad (un desastre todo)
 #kNNdist es la mutual reachability distance
@@ -48,8 +67,4 @@ C_hdbs<-hdbscan(select(X,c(1,2)),4)
 X <- mutate(X, hdbs = factor(C_hdbs$cluster))
 ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hdbs))
 
-#prueba de optics (funciona pero no se como representarlo como los otros)
-opt <- X %>% select(c(1,2)) %>% optics(,minPts = 4)
-C_opt<-extractDBSCAN(opt,5)
-X <- mutate(X, opt = factor(C_opt$cluster))
-ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = opt))
+

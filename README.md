@@ -23,7 +23,10 @@ kmeans_figures.Rmd
 libreta con las figuras para la parte de kmeans
 
 prueba_datasets.R
-script inicial donde hice la pruevba de algoritmos por primera vez (km, jerarquico y fuzzy)
+script inicial donde hice la pruevba de algoritmos por primera vez (km, jerarquico, densidad y fuzzy)
 
 prueba_dist_dbs.R
 script que de momento no funciona ni tiene nada importante
+
+dbscan.R
+scrpit con el clustering de dbscan (optics iria aqui pero necesito entenderlo mejor)

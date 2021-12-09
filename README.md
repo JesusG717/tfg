@@ -28,6 +28,9 @@ script que de momento no funciona ni tiene nada importante
 dbscan.R
 scrpit con el clustering de dbscan (optics iria aqui pero necesito entenderlo mejor)
 
+UwU_dat.R
+script que me genera unos datos con forma de 3 letras ( dos Us y una w)
+
 dbscan_figures.Rmd
 libreta con figuras para la parte de algoritmos de densidad
 

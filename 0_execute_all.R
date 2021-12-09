@@ -69,3 +69,19 @@ X <- mutate(X, hdbs = factor(C_hdbs$cluster))
 ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hdbs))
 
 
+
+
+
+
+
+#prueba con el data set que hice
+source('uwu_data.R')
+source("km-kmpp.R")
+k<- 3
+UwU <- km_clustering(UwU,k)
+#solucion del kmeans
+plot_km <- ggplot(data = UwU)+geom_point(mapping = aes(x = UwU[,1], y = UwU[,2], color = km))
+plot_km
+#solucion kmeanspp
+plot_kmpp <- ggplot(data = UwU)+geom_point(mapping = aes(x = UwU[,1], y = UwU[,2], color = kpp))
+plot_kmpp

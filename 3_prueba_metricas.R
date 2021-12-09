@@ -1,0 +1,33 @@
+#Aqui voy a ir probando las distintas metricas de validacion
+
+#cargar paquetes
+source("1_setup.R")
+#Quiero leer el archivo de datos primero
+dataset<-'data/artificial/diamond9.arff'
+X<-read.arff(dataset)
+
+#Indice CH
+
+CH_index <- X %>% select(,c(1,2)) %>% NbClust(, method = "kmeans", index = "ch")
+CH_index$Best.nc
+CH_index$Best.partition
+X <- mutate(X, C_ch = factor(CH_index$Best.partition))
+plot_ch <- ggplot(data = X) + geom_point( mapping = aes(x = X[,1], y = X[,2], color = C_ch)) + 
+  labs(title = "Datos agrupados con Kmeans", colour = "Clusters") + 
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_ch
+
+#Para pintar una grafica de distintos valores de k solo se me ocurre hacer CH fijando el min-nc y el max.nc al mismo
+CH <- c()
+k <- c(4:14)
+for (i in 4:14) {
+  CH_value <- X %>% select(,c(1,2)) %>% NbClust(,min.nc = i, max.nc = i, method = "kmeans", index = "ch")
+  CH <- cbind(CH,CH_value$Best.nc)
+}
+CHplotting <- data.frame(k,CH[2,])
+CH_graph <- ggplot(data = CHplotting) + geom_point(mapping = aes( x = CHplotting[,1], y = CHplotting[,2]), size = 5, color = "red") + 
+  geom_line( mapping = aes( x = CHplotting[,1], y = CHplotting[,2]), color = "blue", size = 1) +
+  labs(title = "CH en función del número de clusters") + 
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+grid.arrange(CH_graph,plot_ch, ncol=2, top = "Valores del índice CH asociados a una cierta muestra de datos")
+

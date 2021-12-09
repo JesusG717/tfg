@@ -1,6 +1,6 @@
 #funciones para hacer el clutering por densidad
 #primero el dbscan
-function(X,epsilon,MinPts){
+dbs <- function(X,epsilon,MinPts){
   C_d <- X %>% select(c(1,2)) %>% dbscan(epsilon,MinPts)
   X <- mutate(X, dbs = factor(C_dbs$cluster))
   return(X)

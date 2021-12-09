@@ -4,7 +4,7 @@
 #cargar paquetes
 source("1_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/zelnik3.arff'
+dataset<-'data/artificial/complex9.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos
@@ -43,7 +43,8 @@ C_f<- X %>% select(c(1,2)) %>% Fclust(k,type)
 plot.fclust(C_f,umin=0.3,ucex = TRUE, pca = FALSE)
 
 #dbscan (ahora funciona pero no se muy bien que valores de MinPts y epsiloin poner)
-epsilon <- 0.1 #bastante arbitrario de momento
+#estos numeros son para complex9 (12,4)
+epsilon <- 12 #bastante arbitrario de momento
 MinPts <- 4 #numero variables*2
 C_dbs <- X %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 X <- mutate(X, dbs = factor(C_dbs$cluster))
@@ -55,7 +56,7 @@ plot_dbs
 opt <- X %>% select(c(1,2)) %>% optics(,minPts = 4)
 C_opt<-extractDBSCAN(opt,0.1)
 X <- mutate(X, opt = factor(C_opt$cluster))
-ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = opt))
+ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class))
 
 #el dscan parece mas sensible al epsilon que el optics, tengo que mirarlo con calma
 

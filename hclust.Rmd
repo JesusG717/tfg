@@ -4,6 +4,7 @@ output: html_notebook
 ---
 Primero pongo un ejemplo de dendrograma y una clasificación jerárquica. Busque unos datos pequeños para que se vea algo en el dendrograma
 ```{r}
+  source("1_setup.R")
   dataset<-'data/artificial/3-spiral.arff'
   X<-read.arff(dataset)
   k<-nlevels(X$class)
@@ -18,7 +19,8 @@ Primero pongo un ejemplo de dendrograma y una clasificación jerárquica. Busque
   dendrogram <- plot(C_h)
   plot_h <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc)) +
     labs(title = "Partición para k = 3", colour = "Clusters") + theme(axis.title = element_blank())
-  grid.arrange(dendrogram,plot_h,ncol=2)
+  layout <- c(area(1),area(2))
+  plot(C_h) + plot_h +plot_layout(design = layout)
 ```
 Quiero ver el chain effect del single link y como el complete link lo hace mejor en esos casos
 

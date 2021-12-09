@@ -1,0 +1,30 @@
+---
+title: "dbscan_figures"
+output: html_document
+---
+
+Aqui voy a poner las figuras para el dbscan y el otro que use de densidad (optics probabablemente)
+
+
+primero un ejemplo basico de algo que haga bien el dbscan
+Para ello uso un set que vimos antes que con kmeans fallaba 
+```{r}
+
+#cargar paquetes
+source("1_setup.R")
+#Quiero leer el archivo de datos primero
+dataset<-'data/artificial/complex9.arff'
+X<-read.arff(dataset)
+#epsilon y minpoints probe hasta que funcionaban, nigun criterio claro
+epsilon <- 12 #bastante arbitrario de momento
+MinPts <- 4 #numero variables*2
+C_dbs <- X %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
+X <- mutate(X, dbs = factor(C_dbs$cluster))
+plot_dbs <- ggplot(data = X) + geom_point(mapping = aes(x = X[,1], y = X[,2], colour = dbs)) +
+  labs(title = "DBSCAN Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_dbs
+plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+
+grid.arrange(plot_dbs, plot_real, ncol = 2, top = 'Partición de una muestra artificial con DBSCAN')
+
+```

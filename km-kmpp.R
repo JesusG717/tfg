@@ -1,7 +1,7 @@
 #Voy a definir una función que haga kmeans y kmeans++
 #X un data frame con variables a estudiar en las dos primeras columnas y k numero de clusters
-km_clustering <- function(X,k){
-  C_km<- X %>% select(c(1,2)) %>% kmeans(k)
+km_clustering <- function(X,k,num_km){
+  C_km<- X %>% select(c(1,2)) %>% kmeans(k,nstart = num_km)
   #lo mismo pero con kmeans++
   
   C_kpp<- X %>% select(c(1,2)) %>% kmeanspp(k)

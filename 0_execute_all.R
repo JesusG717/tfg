@@ -4,7 +4,7 @@
 #cargar paquetes
 source("1_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/complex9.arff'
+dataset<-'data/artificial/cure-t2-4k.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos
@@ -16,7 +16,7 @@ k
 
 #Hago partición kmeans y kmea++
 source("km-kmpp.R")
-X <- km_clustering(X,k)
+X <- km_clustering(X,k,1)
 #solucion del kmeans
 plot_km <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
 plot_km
@@ -44,14 +44,20 @@ plot.fclust(C_f,umin=0.3,ucex = TRUE, pca = FALSE)
 
 #dbscan (ahora funciona pero no se muy bien que valores de MinPts y epsiloin poner)
 #estos numeros son para complex9 (12,4)
-epsilon <- 12 #bastante arbitrario de momento
-MinPts <- 4 #numero variables*2
+epsilon <- 0.08 #bastante arbitrario de momento
+MinPts <- 15 #numero variables*2
 C_dbs <- X %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 X <- mutate(X, dbs = factor(C_dbs$cluster))
 plot_dbs <- ggplot(data = X) + geom_point(mapping = aes(x = X[,1], y = X[,2], colour = dbs))
 plot_dbs
 
-
+X_Filter <- filter(X,dbs != 0, .preserve = FALSE)
+summary(X_Filter)
+plot_dbs_filtro <- ggplot(data = X_Filter) + geom_point(mapping = aes(x = X_Filter[,1], y = X_Filter[,2], colour = dbs))
+plot_dbs_filtro
+X_Filter <- km_clustering(X_Filter,k-1,1)
+plot_km_filtro <- ggplot(data = X_Filter)+geom_point(mapping = aes(x = X_Filter[,1], y = X_Filter[,2], color = km))
+plot_km_filtro
 #prueba de optics (aun tengo que ver como representarlo diferente al resto)
 opt <- X %>% select(c(1,2)) %>% optics(,minPts = 4)
 C_opt<-extractDBSCAN(opt,0.1)

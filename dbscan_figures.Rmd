@@ -28,3 +28,17 @@ plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], col
 grid.arrange(plot_dbs, plot_real, ncol = 2, top = 'Partición de una muestra artificial con DBSCAN')
 
 ```
+
+
+
+Ahora un ejemplo de una particion a la que le hago kmeans, y luego hago kmeans despues de filtrar el ruido
+```{r}
+plot_km <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) +
+  labs(title = "K means sin filtrado", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_km_filtro <- ggplot(data = X_Filter)+geom_point(mapping = aes(x = X_Filter[,1], y = X_Filter[,2], color = km)) + labs(title = "K means con filtrado previo", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+
+grid.arrange(plot_km,plot_km_filtro,plot_real,ncol=3, top ='Efecto del filtrado de ruido por densidad')
+
+
+```

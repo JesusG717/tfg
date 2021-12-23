@@ -42,3 +42,27 @@ grid.arrange(plot_km,plot_km_filtro,plot_real,ncol=3, top ='Efecto del filtrado 
 
 
 ```
+
+
+PARTE OPTICS
+
+figura en la que se ve una aprticion de densidad variable donde dbscan falla
+
+```{r}
+source('vary_density_data.R')
+source('dbscan.R')
+
+
+epsilon <- 0.5 #bastante arbitrario de momento
+MinPts <- 15 #numero variables*2
+C_dbs <- D %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
+D <- mutate(D, dbs = factor(C_dbs$cluster))
+plot_dbs_1 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.5 MinPts = 15", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+epsilon <- 0.2 #bastante arbitrario de momento
+MinPts <- 15 #numero variables*2
+C_dbs <- D %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
+D <- mutate(D, dbs = factor(C_dbs$cluster))
+plot_dbs_2 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.2 MinPts = 15", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_real <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3, top = 'DBSCAN en una partición con densidad variable')
+```

@@ -24,3 +24,4 @@ class <- c(rep(1, times = n1), rep(2, times = n1), rep(3, times = n2), rep(4, ti
 D <- data.frame(D_x,D_y)
 
 D <- mutate(D, class = factor(class))
+ggplot(data = D) + geom_point(mapping = aes(x = D_x, y = D_y), color = class)

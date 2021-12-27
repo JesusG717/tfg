@@ -57,12 +57,32 @@ epsilon <- 0.5 #bastante arbitrario de momento
 MinPts <- 15 #numero variables*2
 C_dbs <- D %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 D <- mutate(D, dbs = factor(C_dbs$cluster))
-plot_dbs_1 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.5 MinPts = 15", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_dbs_1 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.5", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 epsilon <- 0.2 #bastante arbitrario de momento
 MinPts <- 15 #numero variables*2
 C_dbs <- D %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 D <- mutate(D, dbs = factor(C_dbs$cluster))
-plot_dbs_2 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.2 MinPts = 15", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_dbs_2 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.2", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 plot_real <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3, top = 'DBSCAN en una partición con densidad variable')
+grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3, top = 'DBSCAN (MinPts = 15) en una partición con densidad variable')
+```
+
+
+
+
+Ahora el ejemplo de antes pero con OPTICS para ver que funciona bien
+
+```{r}
+source('vary_density_data.R')
+source('dbscan.R')
+
+
+opt <- D %>% select(c(1,2)) %>% optics(,minPts = 15)
+C_opt<-extractDBSCAN(opt,0.2)
+D <- mutate(D, opt = factor(C_opt$cluster))
+plot_opt <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = opt))
+reach_plot <- ggplot_optics(C_opt, groups = D$class) + labs(title = "Reachability Plot", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+
+plot_real <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+grid.arrange(reach_plot,plot_real,ncol=2,top='Optics en un conjunto de densidad variable')
 ```

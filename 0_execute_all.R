@@ -4,7 +4,7 @@
 #cargar paquetes
 source("1_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/cure-t2-4k.arff'
+dataset<-'data/artificial/2d-4c-no4.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos

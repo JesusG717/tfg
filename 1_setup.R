@@ -15,3 +15,5 @@ library('gridExtra')
 library('grid')
 #para poner graficas juntas
 library('patchwork')
+#para meter optics al ggplot
+library('opticskxi')

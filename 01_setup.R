@@ -17,3 +17,5 @@ library('grid')
 library('patchwork')
 #para meter optics al ggplot
 library('opticskxi')
+#mas mierda de hacer tablitas y eso
+library(knitr)

@@ -14,13 +14,6 @@ access_token <- get_spotify_access_token()
 aut <- get_spotify_authorization_code()
                                       
 
-#prueba 1: te saca en orden las escalas mas usadas del artista
-yo <- get_artist_audio_features('Queen')
-
-sub <- select(yo, c('energy','danceability','key_mode','loudness'))
-summary(sub)
-sub %>% count(key_mode, sort = TRUE) %>% head(5) %>% kable()
-
 
 #prueba 2: sacar las canciones más escuchadas de un usuario
                                       
@@ -41,11 +34,38 @@ top_tracks
 
 
 #prueba de hacer algun clustering
+source('10_hclust.R')
 source('11_km-kmpp.R')
-D <- top_tracks %>% select(,c(4:9))
-C <- NbClust(data = D, distance = 'euclidean',method = 'kmeans', index = c('silhouette'))
+source('12_dbscan.R')
+D <- select(audio_features,c('danceability','key'))
+KM <- km_clustering(D,3,20)
+C <- NbClust(data = D, distance = 'euclidean',method = 'kmeans', index = c('ch'))
 C
 Resultados <- select(top_tracks,'name')
-Resultados <- mutate(Resultados, class = factor(C$Best.partition))   
-Tabla <- mutate(Resultados, n= filter(Resultados, class == factor(i) )
+Resultados <- mutate(Resultados, KM)   
+
+Resultados <- mutate(Resultados, class = factor(KM$kpp))   
+Resultados
+
+
 #QUIERO UNA MANERA DE PONER LA AGRUPACION BONITA
+
+
+
+
+u <- get_playlists()
+
+
+
+#Pablo
+u <- get_user_audio_features('9v2h1n2bq7qf80yz9cwb3kfmb')
+
+
+Sys.setenv(SPOTIFY_CLIENT_ID = '71fc7704316842e0beca8a2a40abe091')
+Sys.setenv(SPOTIFY_CLIENT_SECRET = 'b218329af8a34dec872949e34082fee0')
+
+access_token <- get_spotify_access_token()
+#autorizar a coger datos de usuario
+
+aut <- get_spotify_authorization_code()
+No

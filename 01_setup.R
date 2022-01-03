@@ -19,3 +19,5 @@ library('patchwork')
 library('opticskxi')
 #mas mierda de hacer tablitas y eso
 library(knitr)
+#cosas para spoti
+library('httpuv')

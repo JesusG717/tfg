@@ -1,7 +1,7 @@
 #Data set que probe a hacer yo para probar a hacer letras
 #despues de ejecutarlo se obtiene el data.frame UwU que tiene las coord x, y y las clases de cada punto en el
 
-source('1_setup.r')
+source('01_setup.r')
 #rectangulos de las Us
 n <- 1000
 U1left_x <- runif(n,1,2)
@@ -55,3 +55,4 @@ Classes <- c(rep(1, times =2000), rep(2,times =2000),rep(1, times = 1000), rep(2
 UwU <- mutate(UwU, class = factor(Classes))
 
 ggplot(data = UwU)+geom_point(mapping = aes(x = UwU_x, y = UwU_y, colour = class))
+

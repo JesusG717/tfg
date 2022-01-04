@@ -37,8 +37,8 @@ top_tracks
 source('10_hclust.R')
 source('11_km-kmpp.R')
 source('12_dbscan.R')
-D <- select(audio_features,c('danceability','key'))
-KM <- km_clustering(D,3,20)
+D <- select(audio_features,c('danceability','key','instrumentalness'))
+KM <- km_clustering(D,10,20)
 C <- NbClust(data = D, distance = 'euclidean',method = 'kmeans', index = c('ch'))
 C
 Resultados <- select(top_tracks,'name')
@@ -52,8 +52,25 @@ Resultados
 
 
 
+#pruebas a coger cosas de una playlist
+u <- get_my_playlists(limit=20,offset=10,)
+names(u)
+select(u,c('id','name'))
+#id Pablo y yo 37i9dQZF1EJC0RPFMlH6eu
+#id Tene y yo  37i9dQZF1EJC0RPFMlH6eu
+#id Mapi y yo 37i9dQZF1EJAqLHGHdMMaa
+#id EDM intenso 1ybnNmpES2UCb8ewXx53AP
+#id EDM suave 5acI3aZUMKMp2uct2BDlas
+#id desquiciados 7yl2L6SF5B1tjbp8vqb5wh
+Mix_PC <- get_playlist(playlist_id = '37i9dQZF1EJC0RPFMlH6eu',authorization = access_token)
 
-u <- get_playlists()
+
+
+
+
+
+
+
 
 
 
@@ -68,4 +85,3 @@ access_token <- get_spotify_access_token()
 #autorizar a coger datos de usuario
 
 aut <- get_spotify_authorization_code()
-No

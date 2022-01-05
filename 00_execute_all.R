@@ -2,9 +2,9 @@
 
 
 #cargar paquetes
-source("1_setup.R")
+source("01_setup.R")
 #Quiero leer el archivo de datos primero
-dataset<-'data/artificial/2d-4c-no4.arff'
+dataset<-'data/artificial/aggregation.arff'
 X<-read.arff(dataset)
 
 summary(X)#variables que tienen los datos
@@ -15,7 +15,7 @@ k<-nlevels(X$class)
 k
 
 #Hago partición kmeans y kmea++
-source("km-kmpp.R")
+source("11_km-kmpp.R")
 X <- km_clustering(X,k,1)
 #solucion del kmeans
 plot_km <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
@@ -25,13 +25,22 @@ plot_kmpp <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], col
 plot_kmpp
 
 #Hago partición para el jerarquico
-source("hclust.R")
+source("10_hclust.R")
 
-method<-'single' #metodos: complete, single, average, centroids
+method<-'complete' #metodos: complete, single, average, centroids
 X <- h_clustering(X,method)
 #solucion del jerarquico
 plot_h <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc))
 plot_h
+
+#pruebas de dendrogramas mas bonitos
+#necesito el objeto hclust directamente, no me vale X
+C_h <- X %>% select(c(1:2)) %>% dist() %>% hclust(method)
+
+dend <- fviz_dend(x = C_h,k = k, labels_track_height = 0, rect = TRUE)
+grid.arrange(plot_h,dend,ncol=2)
+
+
 
 #Hago el fuzy clustering 
 #este no lo hice en un script separado porque es diferente a los otros y no se muy bien como hacerlo

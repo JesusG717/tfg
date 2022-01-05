@@ -4,23 +4,23 @@ output: html_notebook
 ---
 Primero pongo un ejemplo de dendrograma y una clasificación jerárquica. Busque unos datos pequeños para que se vea algo en el dendrograma
 ```{r}
-  source("1_setup.R")
-  dataset<-'data/artificial/3-spiral.arff'
+  source("01_setup.R")
+  dataset<-'data/artificial/aggregation.arff'
   X<-read.arff(dataset)
   k<-nlevels(X$class)
   k
-  
+  method <- 'complete'
   C_h <- X %>% select(c(1:2)) %>% dist() %>% hclust(method)
   #dendrograma
-  dendrogram <- plot(C_h)
-  #conseguir una particion concreta
+  dend <- fviz_dend(x = C_h,k = k, labels_track_height = 0, rect = TRUE)
+
   partition_h<-cutree(C_h,k)
   X <- mutate(X, hc = factor(partition_h))
-  dendrogram <- plot(C_h)
   plot_h <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc)) +
-    labs(title = "Partición para k = 3", colour = "Clusters") + theme(axis.title = element_blank())
-  layout <- c(area(1),area(2))
-  plot(C_h) + plot_h +plot_layout(design = layout)
+    labs(title = "Partición para k = 7", colour = "Clusters") + theme(axis.title = element_blank())
+  plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+  grid.arrange(plot_h,dend,plot_real,ncol = 3, top ='Clustering Jerárquico para un k conocido con su dendrograma asociado')
+ 
 ```
 Quiero ver el chain effect del single link y como el complete link lo hace mejor en esos casos
 

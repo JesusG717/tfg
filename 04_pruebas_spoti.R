@@ -62,15 +62,33 @@ select(u,c('id','name'))
 #id EDM intenso 1ybnNmpES2UCb8ewXx53AP
 #id EDM suave 5acI3aZUMKMp2uct2BDlas
 #id desquiciados 7yl2L6SF5B1tjbp8vqb5wh
-Mix_PC <- get_playlist(playlist_id = '37i9dQZF1EJC0RPFMlH6eu',authorization = access_token)
+#id top 100 2021 37i9dQZF1EUMDoJuT8yJsl
+#Con las playlist fusion da error
 
 
 
+#voy a probar a juntar varias playlist de estado de animo
+#sad  https://open.spotify.com/playlist/37i9dQZF1DWZqdNJSufucb?si=b9f5f21e80da4a2d
+#happy  https://open.spotify.com/playlist/37i9dQZF1DX9Dh2wgiAwVX?si=9e3b22a4c5c344d9
+#pump up  https://open.spotify.com/playlist/37i9dQZF1DX35X4JNyBWtb?si=84c8a491cf6c42f2
+#jazz https://open.spotify.com/playlist/37i9dQZF1DX0SM0LYsmbMT?si=81057d7ef74a4c07
+#gym  https://open.spotify.com/playlist/37i9dQZF1DX76Wlfdnj7AP?si=f5b5180739284a73
+
+plist1 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1DWZqdNJSufucb')
+plist2 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1DX9Dh2wgiAwVX')
+plist3 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1DX76Wlfdnj7AP')
+
+plist <- rbind(plist1,plist2,plist3)
 
 
-
-
-
+plist <- select(plist, c(2,'track.name',6:13,15,16))
+names(plist)
+C <- NbClust(data =  select(plist,c(3:12)), distance = 'euclidean', method = 'kmeans', index = c('silhouette'))
+C
+results <- select(plist,c('track.name'))
+results <- mutate(results, class = factor(C$Best.partition))
+results <- results %>% arrange(,class)
+results %>% filter(,class =='1') %>% print(,n = Inf)
 
 
 

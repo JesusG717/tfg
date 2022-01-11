@@ -1,5 +1,5 @@
 #jerarquico
-h_clustering <- function(X,method){
+h_clustering <- function(X,method,k){
   C_h <- X %>% select(c(1:2)) %>% dist() %>% hclust(method)
   #dendrograma
   dendrogram <- plot(C_h)

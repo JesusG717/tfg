@@ -19,6 +19,9 @@ script donde pruebo los indices que meto en el trabajo
 04_prueba_spoti.R
 Script donde pruebo trabajar con datos de la API
 
+05_prueba_proyecto.R
+Script donde pruebo una idea de como usar los datos de spoti para meter en el TFG 
+
 10_hclust.R 
 funcion para hacer el clustering jerarquico
 

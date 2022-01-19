@@ -21,3 +21,5 @@ library('opticskxi')
 library(knitr)
 #cosas para spoti
 library('httpuv')
+#paquete para mejor visualizacion
+library('factoextra')

@@ -31,6 +31,9 @@ script con las funciones para hacer kmeans y kmeanspp (incluye kmeans con centro
 12_dbscan.R
 scrpit con el clustering de dbscan (optics iria aqui pero necesito entenderlo mejor)
 
+13_fclust.R
+script con figuras de clustering difuso
+
 20_dbscan_figures.Rmd
 libreta con figuras para la parte de algoritmos de densidad
 

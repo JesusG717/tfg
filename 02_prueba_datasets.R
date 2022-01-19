@@ -1,17 +1,11 @@
-library('tidyverse')
-library('RWeka')
-library('fclust')
-library('NbClust')
-#paquete para el kmeanspp
-library('LICORS')
-#cluster me a?ade daisy() para usar distancias para clustering categorico (ver jerarquico)
-library('cluster')
-#dbscan y hdbscan
-library('dbscan')
 
+source('01_setup.R')
+
+#mi data set (voy a probarlo en el fuzzy)
+source('31_UwU_data.R')
 
 #elegimos el data aqui (mirar los nombres en la carpeta)
-dataset<-'data/artificial/3-spiral.arff'
+dataset<-'data/artificial/3MC.arff'
 data<-read.arff(dataset)
 summary(data)
 #clasificacion real de los datos
@@ -43,14 +37,12 @@ ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = kpp))
 
 
 #fuzzy clustering
-type<-'gk' #algoritmos: FKM, gk
+type<- 'gk' #algoritmos: FKM, gk
 C_f<- X %>% select(c(1,2)) %>% Fclust(k,type)
 #mirar todas las opciones del paquete fclust para ver como pintar cosas diferente
-plot.fclust(C_f,umin=0.3,ucex = FALSE, pca = FALSE)
-
-
-
-
+plot.fclust(C_f,ucex = TRUE, pca = FALSE)
+C_f$U
+#NO entiendo por que FKM va mejor que GK en el uwu, no deberia por las formas
 
 #jerarquico
 method<-'complete' #metodos: complete, single, average, centroids

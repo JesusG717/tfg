@@ -1,7 +1,7 @@
 #Intento de primer proyecto con spoti
 #La idea es tomar una gran cantidad de datos, con genero de cancion, playlist o usuario del que toma el track
 #y crear samples de esa poblacion para comparar la efectividad de los algoritmos de clustering en ejemplos reales
-
+#NOTA: abajo del todo hay una prueba con mis playlist
 source('01_setup.R')
 
 #paquete para la api de spoti
@@ -16,6 +16,60 @@ access_token <- get_spotify_access_token()
 
 aut <- get_spotify_authorization_code()
 
+
+
+#lo primero es saber dejar los datos listos para analizar
+#ahora quiero coger una muestra y sacar de ahi las variables para hacer clustering y los generos
+#mis daily mixes (7/2):
+#37i9dQZF1E37k7BOils0mb
+#37i9dQZF1E3920mzHHtk0B
+#37i9dQZF1E38JwgfTAgiXb
+#37i9dQZF1E357mYJL8BeUV
+#37i9dQZF1E37MgbROqdOgm
+#37i9dQZF1E37MgbROqdOgm
+
+
+plist1 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E37k7BOils0mb')
+plist2 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E3920mzHHtk0B')
+plist3 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E38JwgfTAgiXb')
+plist4 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E357mYJL8BeUV')
+plist5 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E37MgbROqdOgm')
+plist6 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E37MgbROqdOgm')
+
+plist <- rbind(plist1,plist2,plist3,plist4,plist5,plist6)
+#veo que variables tengo
+names(plist)
+#no encuentro nada que de el genero de la cancion, ais que voy a probar a coger una cancion por su track id
+
+track1 <- get_track(plist$track.id[1])
+
+#tengo que seguir buscando donde está el genero del track
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Prueba con mis playlist y eso
 
 #Primero voy a probar a sacar una serie de canciones de playlist de genero diferentes
 #mi playlist de EDM chilling: 5KeK4yPMHYYsSslZtD1Eib

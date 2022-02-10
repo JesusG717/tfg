@@ -39,27 +39,43 @@ plist6 <- get_playlist_audio_features(playlist_uris = '37i9dQZF1E37MgbROqdOgm')
 plist <- rbind(plist1,plist2,plist3,plist4,plist5,plist6)
 #veo que variables tengo
 names(plist)
-#no encuentro nada que de el genero de la cancion, ais que voy a probar a coger una cancion por su track id
-
-track1 <- get_track(plist$track.id[1])
 
 #tengo que seguir buscando donde está el genero del track
 
+#creo que solo da genero a los artistas, no a los tracks
+#rhcp 0L8ExT028jH3ddEcZwqJJ5
+#mandragora 2AasvmwafZPTgQANaoLoQY
+#trueno 2x7PC78TmgqpEIjaGAZ0Oz
+arti <- get_artist('0L8ExT028jH3ddEcZwqJJ5')
 
 
+#efectivamente, solo da genero a los artistas
+#voy a mirar como sacar el nombre del artista, porque viene en una lista dentro del data frame
+artist <- plist$track.artists
+artist <- lapply(artist, '[[',2) #esto me da la segunda columna de la lista, con sus elementos como string
+#puedo cambiar '[[' por '[' y me da esa columna pero con otro formato
+#la columna 2 es la que tiene las id de artista, que es lo que usare para sacar el genero
 
+#ahora tengo un problema, tengo una lista con ids, pero las canciones con dos artistas tienen 2 strings en un elemento
+#esto da error al usar get_artist
 
+#la solucion es vovler a usar lapply como antes y te saca la columna que pidas. de momento voy a coger solo la 1
+artist <- lapply(artist, '[[',1)
+#get artists solo va de 50 en 50 T.T toca ir paso a paso
+aux <- get_artists(artist[1:50])
+aux <- rbind(aux,get_artists(artist[51:100]))
+aux <- rbind(aux,get_artists(artist[101:150]))
+aux <- rbind(aux,get_artists(artist[151:200]))
+aux <- rbind(aux,get_artists(artist[201:250]))
+aux <- rbind(aux,get_artists(artist[251:300]))
 
+aux$genres
 
+#le meto los generos a plist
+plist <- mutate(plist,aux$genre)
+names(plist)
 
-
-
-
-
-
-
-
-
+#ya seguire
 
 
 

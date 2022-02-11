@@ -123,3 +123,13 @@ muestra <- plist[sample(nrow(plist),120), ]
 #eso es una muestra de 120 canciones random, ahora haremos clustering con varios metodos y veremos cual funciona mejor
 #primero sera interesante pensar que variables seran las significativas y que es lo que busco encontrar
 
+
+######### GET GENRE
+p <- plist1
+tracks_and_artist <- p %>% 
+  select(track.id, track.artists) %>% 
+  unnest(track.artists) %>% 
+  select(track.id, id) %>%
+  rename(artist.id = id)
+artists_info <- spotifyr::get_artists(tracks_and_artist %>% pull(artist.id) %>% distinct())
+inner_join(tracks_and_artist, artists_info, by = c("artist.id", "id"))

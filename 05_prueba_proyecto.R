@@ -126,10 +126,17 @@ muestra <- plist[sample(nrow(plist),120), ]
 
 ######### GET GENRE
 p <- plist1
+tracks_training <- p %>% select(track.id, valence)
+ggplot(tracks_training, aes(valence)) +
+  geom_histogram()
+table(is.na(tracks_training$valence))
 tracks_and_artist <- p %>% 
   select(track.id, track.artists) %>% 
   unnest(track.artists) %>% 
   select(track.id, id) %>%
   rename(artist.id = id)
-artists_info <- spotifyr::get_artists(tracks_and_artist %>% pull(artist.id) %>% distinct())
-inner_join(tracks_and_artist, artists_info, by = c("artist.id", "id"))
+artists_info <- spotifyr::get_artists(tracks_and_artist %>% pull(artist.id) %>% unique())
+artists_info <- artists_info %>% select(genres, id) %>%  rename(artist.id = id)
+tracks_and_genres <- inner_join(tracks_and_artist, artists_info)  %>% unnest(genres)
+tracks_and_genres %>% group_by(genres) %>% count() %>% arrange(desc(n))
+tracks_and_genres %>% mutate(value = TRUE) %>% pivot_wider(names_from = genres, values_from = value, values_fill = FALSE)

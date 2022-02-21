@@ -29,13 +29,15 @@ tracks_and_artist <- tracks %>%
   select(track.id, id) %>%
   rename(artist.id = id)
 #get_artists limit is 50
-artists_info <- get_artists(tracks_and_artist[1:50,] %>% pull(artist.id) %>% unique())
+artists_info <- get_artists(tracks_and_artist[1:50,] %>% pull(artist.id) %>% unique()) %>% as_tibble()
 for (i in 2:floor(nrow(tracks_and_artist)/50)) {
-  aux <- get_artists(tracks_and_artist[(i-1)*50:(i-1)*50+50,] %>% pull(artist.id) %>% unique())
-  artists_info <- add_row(artists_info,aux)
+  aux <- get_artists(tracks_and_artist[(i-1)*50:(i-1)*50+50,] %>% pull(artist.id) %>% unique()) %>% as_tibble()
+  artists_info <- bind_rows(artists_info,aux)
 }
+save(artists_info, file ="artists_info.RData")
 glimpse(artists_info)
 artists_info <- artists_info %>% select(genres, id) %>%  rename(artist.id = id)
+artists_info %>% unnest(genres)
 glimpse(artists_info)
 tracks_and_genres <- inner_join(tracks_and_artist, artists_info)  %>% unnest(genres)
 tracks_and_genres %>% group_by(genres) %>% count() %>% arrange(desc(n))

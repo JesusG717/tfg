@@ -12,10 +12,10 @@ aut <- get_spotify_authorization_code()
 plists <- get_my_playlists()
 plists <- rbind(plists,get_my_playlists(offset = 19))
 #get each playlist's tracks
-first <- get_playlist_audio_features(playlist_uris = plists$id[2])
+first <- get_playlist_audio_features(playlist_uris = plists$id[1])
 tracks <- tibble(select(first,c(1,6:17,28)))
 #I skip playlists taht cant be collected (fusion playlists and daily mics most likely)
-for (i in c(3:6,8:9,12:29)) {
+for (i in c(3:7,9,10,13:29)) {
   aux <- get_playlist_audio_features(playlist_uris = plists$id[i])
   aux <- select(aux,c(1,6:17,28))
   tracks <- add_row(tracks,aux)
@@ -39,6 +39,11 @@ glimpse(artists_info)
 artists_info <- artists_info %>% select(genres, id) %>%  rename(artist.id = id)
 artists_info %>% unnest(genres)
 glimpse(artists_info)
-tracks_and_genres <- inner_join(tracks_and_artist, artists_info)  %>% unnest(genres)
+tracks_and_genres <- inner_join(tracks_and_artist, artists_info)  %>% drop_na() %>% unnest(genres)
 tracks_and_genres %>% group_by(genres) %>% count() %>% arrange(desc(n))
 tracks_and_genres %>% mutate(value = TRUE) %>% pivot_wider(names_from = genres, values_from = value, values_fill = FALSE)
+
+
+#tengo en tracks_and_genres los tracks con su genero asociado, mientras que en tracks tengo los tracks con sus ids
+tracks_genre_features <- left_join(tracks_and_genres,tracks,)
+tracks_genre_features <- select(tracks_genre_features,c(1:15))

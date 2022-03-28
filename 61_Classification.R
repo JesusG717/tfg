@@ -35,18 +35,22 @@ MinP <- 3*ncol(track_features %>% select(-c("track.id","genres")))
 neigh <- track_features %>% select(-c("track.id","genres")) %>% kNN(2)
 d <- neigh$dist[,2]
 d <- d[d>0.00001]
-ep <- mean(d)
+ep <- 0.95*max(d)
 
-clust3 <- track_features %>% select(-c("track.id","genres")) %>% dbscan(,eps = min(d), minPts = MinP)
+clust3 <- track_features %>% select(-c("track.id","genres")) %>% dbscan(,eps = ep, minPts = MinP)
 #do a kmeans after filtering noise points
-aux <- track_features %>% select(-c("track.id","genres")) %>% mutate(dbs=factor(clust3$cluster)) %>% filter(dbs != 0)
-clust4 <- aux %>% select(-c("dbs")) %>% NbClust(method = "kmeans")
+aux <- track_features %>% mutate(dbs=factor(clust3$cluster)) %>% filter(dbs != 0)
+clust4 <- aux %>% select(-c("dbs","track.id","genres")) %>% NbClust(method = "kmeans")
+aux <- aux %>% mutate(km_filter = factor(clust4$Best.partition))
+aux2 <- aux %>% select("track.id","genres","km_filter")
+aux3 <- left_join(track_features,aux)#ESTO NO SE NI QUE ESTA HACIENDO YA :'     )
+
 
 #add the clustering results to the main data
 analysis <- track_features %>% select(c("track.id","genres"))
 
 analysis <- analysis %>% mutate(dbs = factor(clust3$cluster),km = factor(clust1$Best.partition), hc = factor(clust2$Best.partition))
-analysis
+summary(analysis)
 #seems like grp 2 of km is grp 1 of hc
 
 #DUDA Arreglar la particion del km filtrado

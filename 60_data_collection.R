@@ -14,12 +14,14 @@ names_col <- names(df)
 df <- df %>% select(c(which(names_col== "danceability"):which(names_col == "track.id"),"track.artists"))
 df <- df[,c(12,13,1:11)]
 
+tracks <- df %>% select(-c("track.artists"))
+
 tracks_and_artist <- df %>% select(track.id, track.artists) %>% unnest(track.artists) %>% 
   select(track.id, id) %>%  rename(artist.id = id)
 #get_artists limit is 50
-artists_info <- get_artists(tracks_and_artist[1:50,2]) %>% pull(artist.id) %>% unique() %>% as_tibble()
-for (i in 2:floor(nrow(tracks_and_artist)/50)) {
-  aux <- get_artists(tracks_and_artist[(i-1)*50:(i-1)*50+50,] %>% pull(artist.id) %>% unique()) %>% as_tibble()
+artists_info <- c()
+for (i in 1:floor(nrow(tracks_and_artist)/50)) {
+  aux <- get_artists(tracks_and_artist[(i-1)*50+1:(i-1)*50+50,] %>% pull(artist.id) %>% unique()) %>% as_tibble()
   artists_info <- bind_rows(artists_info,aux)
 }
 save(artists_info, file ="artists_info.RData")
@@ -36,8 +38,9 @@ tracks_and_genres <- inner_join(tracks_and_artist, artists_info)  %>% drop_na() 
 
 
 #tengo en tracks_and_genres los tracks con su genero asociado, mientras que en tracks tengo los tracks con sus ids
-tracks_genre_features <- left_join(tracks_and_genres,tracks,)
-tracks_genre_features <- select(tracks_genre_features,c(1:15))
+tracks_genre_features <- left_join(tracks_and_genres,tracks)
+tracks_genre_features <- tracks_genre_features %>% select(-c("artist.id"))
+
 save(tracks_genre_features, file = "tracks_genre_features.RData")
 
 

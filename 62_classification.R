@@ -1,17 +1,17 @@
 #CLASIFICATION
 source("01_setup.R")
 load("track_features.RData")
+#REPASAR CON LOS NUEVOS DATOS
+glimpse(track_features)
 
 
-#first test with the whole dataset
-
-clust1 <- track_features %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans",min.nc = 2,max.nc = 4,index = "ch")
-clust2 <- track_features %>% select(-c("track.id","genres")) %>% NbClust(method = "complete",min.nc = 2,max.nc = 4,index = "ch")
+clust1 <- track_features %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans")
+clust2 <- track_features %>% select(-c("track.id","genres")) %>% NbClust(method = "complete")
 #for dbscan epsilon and minpts have to be determined
 # rule of thumb: MinPts = 2*dimension of data. This data has a lot of duplicates so we will do 3*dim
 MinP <- 3*ncol(track_features %>% select(-c("track.id","genres")))
 neigh <- track_features %>% select(-c("track.id","genres")) %>% kNN(2)
-
+d <- neigh$dist[,2]
 ep <- 0.95*max(d)
 
 clust3 <- track_features %>% select(-c("track.id","genres")) %>% dbscan(,eps = ep, minPts = MinP)
@@ -36,6 +36,6 @@ analysis_alldata <- analysis_alldata %>% mutate(km_filter = as.factor(analysis_a
 analysis_alldata$km_filter %>% replace_na(0)
 analysis_alldata <- analysis_alldata[-4103,]
 summary(analysis_alldata)
-#seems like grp 2 of km is grp 1 of hc
+
 #save the file with the clusterings
 save(analysis_alldata, file = "analysis_alldata.RData")

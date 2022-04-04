@@ -39,3 +39,4 @@ summary(analysis_alldata)
 
 #save the file with the clusterings
 save(analysis_alldata, file = "analysis_alldata.RData")
+

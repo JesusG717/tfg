@@ -65,7 +65,7 @@ track_features <- track_features %>% mutate(loudness = (track_features$loudness-
 #mode is 0 if in minor, 1 if in major
 #key is an integer 1 to 11 according to the pitch
 
-features <- track_features %>% select(-c("key","mode"))
+track_features <- track_features %>% select(-c("key","mode"))
 
 #save filtered data with features adjusted
 save(track_features,file = "track_features.RData")
@@ -77,10 +77,6 @@ track_features %>% group_by(genres) %>% count() %>% arrange(desc(n))
 
 
 
-# #PCA
-# pca_f <- features %>% select(-c("track.id","genres")) %>% prcomp()
-# summary(pca_f)
-# as.tibble(pca_aux$x[,1:6])
 
 
 

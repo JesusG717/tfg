@@ -25,3 +25,5 @@ library('httpuv')
 library('factoextra')
 #extension a ggplot
 library('GGally')
+#hacer treemaps
+library('treemapify')

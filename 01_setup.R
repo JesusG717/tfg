@@ -23,3 +23,5 @@ library(knitr)
 library('httpuv')
 #paquete para mejor visualizacion
 library('factoextra')
+#extension a ggplot
+library('GGally')

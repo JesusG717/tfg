@@ -1,12 +1,16 @@
 #variable analysis
-
+source('01_setup.R')
 load('track_features.RData')
-groups <- names(track_features %>% select(-c("track.id","genres")))
-track_features %>% select(-c("track.id","genres")) %>% bartlett.test(,groups)
-ks.test(track_features$tempo,pnorm)
+features <- track_features %>% select(-c("track.id","genres"))
+ggcorr(features)
 
 #PCA
-pca_f <- track_features %>% select(-c("track.id","genres")) %>% prcomp()
+pca_f <- features %>% prcomp()
 summary(pca_f)
 as.tibble(pca_f$x[,1:6])
 pca_f$rotation
+
+#voy a prbar quedandome con 3 y 4 componentes
+#3 componentes (73% de la varianza explicada)
+
+pca_f$x %>% as_tibble()

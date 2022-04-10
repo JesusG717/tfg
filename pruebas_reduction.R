@@ -37,6 +37,9 @@ summary(results_pca)
 # Mode  :character   Mode  :character   3: 77           3: 58          
 #                                       4: 94           4: 89          
 #                                       5: 37           5: 37          
+
+#pruebo a visualizar los resultados con maptrees
+#maptrees de proporcion de generos en cada agrupacion creada por kmeans con 3 variables del PCA
 tr_df <- results_pca %>% filter(km70==1) %>% group_by(genres) %>% count()
 km70_1_tree <- ggplot(data = tr_df) + geom_treemap(mapping = aes(area = n,fill = genres))
 
@@ -54,5 +57,7 @@ km70_5_tree <- ggplot(data = tr_df) + geom_treemap(mapping = aes(area = n,fill =
 
 tr_df <- results_pca  %>% group_by(genres) %>% count()
 data_0_tree <- ggplot(data = tr_df) + geom_treemap(mapping = aes(area = n,fill = genres))
-
+#' imagen conjunta de la proporcion de generos en todos los datos, y luego la proporcion de generos en 
+#' cada partición dad por el kmeans a 3 variables del PCA, en orden. Ejemplo, arriba izq: conjunto total de datos
+#' arriba derecha: grupo 1 medio izq:grupo 2 medio derecha: grupo 3....
 grid.arrange(data_0_tree,km70_1_tree,km70_2_tree,km70_3_tree,km70_4_tree,km70_5_tree,ncol = 2,nrow = 3)

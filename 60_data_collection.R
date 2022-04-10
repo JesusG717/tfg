@@ -1,5 +1,5 @@
 #DATA GATHERING
-#example from my own most listened tracks
+
 source('01_setup.R')
 library('spotifyr')
 Sys.setenv(SPOTIFY_CLIENT_ID = '44855249207d40619183b073132a6407')
@@ -8,14 +8,17 @@ access_token <- get_spotify_access_token()
 #autorizar a coger datos de usuario
 aut <- get_spotify_authorization_code()
 
+# tenog una playlist con las canciones que quiero analizar dentro
 #palylist tfg 6ZoGtHnhyHsXXYmFriZgyS
 df <- get_playlist_audio_features(playlist_uris = "6ZoGtHnhyHsXXYmFriZgyS")
 names_col <- names(df)
+#elimino todas la variables que no me interesan
 df <- df %>% select(c(which(names_col== "danceability"):which(names_col == "track.id"),"track.artists"))
 df <- df[,c(12,13,1:11)]
 
 tracks <- df %>% select(-c("track.artists"))
 
+#saco la id del artista de cada track para conseguir los generos asociados a los artistas
 tracks_and_artist <- df %>% select(track.id, track.artists) %>% unnest(track.artists) %>% 
   select(track.id, id) %>%  rename(artist.id = id)
 #get_artists limit is 50

@@ -3,16 +3,24 @@
 source("01_setup.R")
 load("tracks_genre_features.RData")
 #DATA FILTERING/WRANGLING
-#get rid of unnecessary variables (artist.id...)
+#' creo el archivo track_features para meter ahi las track id, generos y las variables para el clustering
+
 track_features <- tracks_genre_features
-#filter out tracks repeated data: tracks with 2 artists or more that have the same genre asociated
+#' me quito los tracks repetidos con mismo genero (esto pasa cuando un track tiene dos artistas
+#' y los dos artistas tienen los mismos generos asciados en spotify)
 track_features <- track_features %>% distinct(track.id,genres,.keep_all = TRUE)
 
-#filter genres
+#miro por encima la distribucion de los generos
 track_features %>% group_by(genres) %>% distinct() %>% count() %>% arrange(n)
+#filtro los generos con menos de 30 canciones
 a <- track_features %>% group_by(genres) %>% distinct() %>% count() %>% arrange(n) %>% filter(n<30)
+
+#funcion auxiliar
 '%!in%' <- function(x,y)!('%in%'(x,y))
+
 track_features <- track_features %>% filter(genres %!in% a$genres)
+
+#voy uniendo generos para tener categorias con suficientes datos
 filtro <- c("progressive house","tropical house","electro house")
 a <- track_features$genres %>% replace(which(track_features$genres %in% filtro),"house") 
 filtro <- c("dutch edm")
@@ -44,14 +52,13 @@ track_features %>% group_by(genres) %>% distinct() %>% count() %>% arrange(desc(
 
 
 track_features <- track_features %>% distinct(track.id,genres,.keep_all = TRUE)
+
+#compruebo como me ha quedado la dsitribución de generos
 track_features %>% group_by(genres) %>% distinct() %>% count() %>% arrange(desc(n))
 
 
 
-#saving filtered data
-save(track_features, file = "track_features.RData")
-
-#standarize all varaibles
+#transformo als variables tempo y loudness a variables entre 0 y 1
 t_max <- max(track_features$tempo)
 t_min <- min(track_features$tempo)
 track_features <- track_features %>% mutate( tempo = (track_features$tempo-t_min)/(t_max-t_min))
@@ -61,20 +68,12 @@ l_min <- min(track_features$loudness)
 l <- (track_features$loudness-l_min)/(l_max-l_min)
 track_features <- track_features %>% mutate(loudness = (track_features$loudness-l_min)/(l_max-l_min))
 
-#removing mode and key variables for now
-#mode is 0 if in minor, 1 if in major
-#key is an integer 1 to 11 according to the pitch
 
+#me quito las variables key y mode porque no se como expresarlas de forma numérica
 track_features <- track_features %>% select(-c("key","mode"))
 
-#save filtered data with features adjusted
+#guardo los datos
 save(track_features,file = "track_features.RData")
-
-#SUBGROUPS OF THE DATA TO CLASSIFY
-#create subgroups with a few amount of genres for more accurate interpretations
-
-track_features %>% group_by(genres) %>% count() %>% arrange(desc(n))
-
 
 
 

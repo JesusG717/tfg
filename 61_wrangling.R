@@ -69,10 +69,14 @@ l <- (track_features$loudness-l_min)/(l_max-l_min)
 track_features <- track_features %>% mutate(loudness = (track_features$loudness-l_min)/(l_max-l_min))
 
 
+
 #me quito las variables key y mode porque no se como expresarlas de forma numérica
+#me ls guardo para usarlas luego
+key_mode <- track_features %>% select(c("track.id","genres","key","mode"))
 track_features <- track_features %>% select(-c("key","mode"))
 
 #guardo los datos
+save(key_mode, file = "key_mode.RData")
 save(track_features,file = "track_features.RData")
 
 

@@ -6,6 +6,7 @@ output: html_document
 ```{r setup, include=FALSE}
 source('01_setup.R')
 load('track_features.RData')
+load('tracks_genre_features.RData')
 ```
 Tenemos los datos cargados, buscamos hacer una interpretación previa de los mismos. En primer lugar, vamos a ver la distribución de género y la correlación entre variables 
 ```{r genre count}
@@ -116,11 +117,44 @@ Tengo que revisar esta grafica, pero parece que todo el house esta dentro de edm
 
 ```{r general analisis of features}
 track_part_final <- track_part %>% filter(genres %!in% c("house"))
-ggplot(track_part_final) + geom_density(aes(danceability)) + geom_density(aes(energy)) + geom_density(aes(loudness)) + geom_density(aes(speechiness)) + geom_density(aes(acousticness)) + geom_density(aes(instrumentalness))
-#ACABR ESTO, AUN NO SE VE BIEN Y PEUDE QUE NECESITE DIVIDIR LAS GRAFICAS.
+den1 <- ggplot(track_part_final) + geom_density(aes(loudness), color = 'green') + geom_density(aes(speechiness), color = 'orange') + geom_density(aes(liveness), color = 'purple') + geom_density(aes(tempo), color = 'darkslateblue') + xlab('feature')
+
+den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature')
+den1+den2
+```
+Se observa en general un comportamiento mucho más variado y sin demasiada repetición. Cada pequeño pico se podría pensar como una posible zona de alta densidad de datos, y por tanto buen candidato para centro de cluster. ¿Relacionarlo con un posible inicio óptimo de kmeans o con el OPTICS y DBSCAN?.
+
+
+Antes de continuar, es interesante analizar las dos variables no continuas: mode and key. Mode vale 0 si menor y 1 si es mayor. Key asigna un número del 1 al 11 en función del pitch. Vamos a tratar de integrarlas, pero primero veamos su comportamiento.
+
+```{r key mode preview}
+load('key_mode.RData')
+track_part_final <- track_part_final %>% left_join(key_mode)
+track_part_final <- track_part_final %>% mutate(mode = as.factor(mode))
+levels(track_part_final$mode) <- c("Menor", "Mayor")
+ggplot(track_part_final %>%
+         distinct(track.id, key, mode), aes(as.factor(key), fill = factor(mode))) +
+  geom_bar(position = "dodge") +
+  labs(x = "Key", fill = "Mode") + scale_fill_brewer(palette = "Dark2") +
+  # hay más paletas aquí https://r-graph-gallery.com/38-rcolorbrewers-palettes.html
+  scale_x_discrete(labels = c("Do",
+                              "Do#/Reb",
+                              "Re",
+                              "Re#/Mib",
+                              "Mi", 
+                              "Fa", 
+                              "Fa#/Solb",
+                              "Sol",
+                              "Sol#/Lab",
+                              "La",
+                              "La#/Sib",
+                              "Si")) +
+  theme_bw()
+
 ```
 
+INSERTA analisis musical profundo que de momento no soy capaz de hacer. De moento veo en general disparidad de modo segun tonalidad salvo en unas pocas excepciones, y estas siempre tienen un conteo bajo.
 
-
+NEXT: pensar alguna interpretación más previa (ver dsitribuciones dentro de diferentes generos ¿?) y analizar la nueva particion e interpretar los resultados.
 
 

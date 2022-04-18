@@ -1,0 +1,126 @@
+---
+title: "Interpretacion datos"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+source('01_setup.R')
+load('track_features.RData')
+```
+Tenemos los datos cargados, buscamos hacer una interpretación previa de los mismos. En primer lugar, vamos a ver la distribución de género y la correlación entre variables 
+```{r genre count}
+ ggplot(track_features, aes(genres)) + geom_bar() + theme_bw() + geom_text(stat = 'count', aes(label = ..count.., vjust = -0.5))
+```
+Vemos que hay una cantidad desproporcionada de rock y metal y eso puede ser un problema para el análsis. Ahora estudiemos la correlación de las variables.
+
+```{r corelation}
+ggcorr(track_features %>% select(-c('track.id','genres')))
+```
+Esto nos da una idea de variables que estan muy relacionadas, por ejemplo energy y loudness, energy y acousticness o danceability y valence. También parece haber cierta correlación entre loudness y acousticness.
+
+Ahora vamos a estudiar como se distribuyen los tracks en diferentes en determinado parámetros. Es interesante comparar los generos que son rock, metal y el resto para ver lo sesgada que sera la clasificación.
+
+```{r energy acousticness}
+track_features <- track_features %>% mutate(generic_genre = as.factor((genres == 'metal')+ 2*(genres == 'rock')))
+levels(track_features$generic_genre) <- c('otro','metal','rock')
+                                            
+ggplot(track_features %>% distinct(track.id,energy, acousticness, generic_genre), aes(energy, acousticness, color = generic_genre)) + geom_point() + theme_bw()
+```
+Observamos que el metal y el rock se concentran en zonas de acousticness muy baja, por lo que no es una buena variable para diferenciar estos géneros. Además, aunque parece existir una correlación negativa entre estas dos variables, podria deberse solo a la gran cantidad de valores extremos tomados.
+
+Vamos a hacer lo mismo pero con danceability y speechiness
+```{r danceability speechiness, echo=FALSE}
+ggplot(track_features %>% distinct(track.id,danceability, speechiness,generic_genre),aes(danceability, speechiness, color = generic_genre)) + geom_point() + theme_bw()
+```
+LA gran mayoria de canciones a analizar presentan valores muy bajos de speechiness. No muestra mucha información sobre los datos esto. Sin embargo, parece que la dispersión en dancability es bastante regular. Vamos a analizar más esto.
+```{r danceability densidad}
+ggplot(track_features %>% distinct(track.id, danceability, generic_genre),aes(danceability, group = generic_genre, color = generic_genre)) + geom_density() + theme_bw()
+```
+
+Aunque se observa más variabilidad en los otros generos (hay diferentes montañitas), rock y metal se distribuyen igual. Esto puede ser un problema y puede crear una falsa sensación de que son el mimos género. Hay que estudiar más esto y ver si se da en otras variables.
+Vamos a comprobar la densidad de varias variables extra respecto a los diferentes generos
+
+
+```{r densities}
+energy_d <- ggplot(track_features %>% distinct(track.id,energy, generic_genre), aes(energy, group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
+tempo_d <- ggplot(track_features %>% distinct(track.id,tempo, generic_genre), aes(tempo, group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
+instru_d <- ggplot(track_features %>% distinct(track.id,instrumentalness,generic_genre),aes(instrumentalness,group = generic_genre, color = generic_genre)) + geom_density() + theme_bw()
+loud_d <- ggplot(track_features %>% distinct(track.id,loudness,generic_genre),aes(loudness,group = generic_genre,color=generic_genre)) + geom_density() + theme_bw()
+energy_d + tempo_d + instru_d + loud_d
+```
+Se observa siempre el mismo patron: rock y metal tienen el mismo comportamiento en muchas variables. Ademas, energia y tempo se ven con curvas pronunciadas, meintras que instrumentalness se ve muy regular para los otros generos, loudness parece que con suficiente precisión se podrían observar algunas diferencias en las loudness mas bajas.
+
+Hay que arreglar las canciones de rock y metal. Vamos a ver cuantas canciones son consideradas rock y metal a la vez.
+```{r metal y rock}
+ggplot(
+  track_features %>%
+    select(track.id, genres) %>%
+    filter(genres %in% c("rock", "metal")) %>%
+    mutate(is = TRUE) %>%
+    pivot_wider(names_from = genres, values_from = is, values_fill = FALSE) %>%
+    mutate(value = paste(rock, metal)),
+  aes(value)) +
+  scale_x_discrete(labels = c("rock", "metal", "ambas")) + # cambiar texto x
+  xlab("") + # quitar etiqueta x
+  geom_bar() +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) + # poner num
+  theme_bw()
+
+```
+Observamos que la gran mayoria de las canciones son rock y metal a la vez. Esto sería un problema para el clustering, ya que estaría sobrerepresentando el mismo genero. La solución es introducir más canciones solo rock o solo metal, o crear una sola clase para las dos.
+
+De momento voy a considerar solo el genero rock e ignorare el metal. Aun con eso, hya muchas más canciones de este genero que de los otros asi que necesito una submuestra menor.
+
+Voy a coger una particion de los datos sin metal y con solo 50 canciones de metal.
+
+```{r partition}
+set.seed(1)
+r <- track_features %>% filter(genres %in% c('rock')) %>% slice_sample(n=50) 
+track_part <- track_features %>% filter(genres %!in% c('rock','metal')) %>% rbind(r)
+count_genre <-  ggplot(track_part, aes(genres)) + geom_bar() + theme_bw() + geom_text(stat = 'count', aes(label = ..count.., vjust = -0.2))
+corr_features <- ggcorr(track_part %>% select(-c('track.id','genres')))
+count_genre + corr_features
+
+
+```
+Al menos parece que las correlaciones son similares aun quitando los datos de metal y estandarizando los de rock. Ahora vamos a estudiar la distribución de algunas variables por géneros.
+
+```{r feature exploration}
+dance_box <- ggplot(track_part %>% distinct(track.id,danceability,genres), aes(danceability,group = genres, color = genres)) + geom_boxplot() +theme_bw()
+loud_box <- ggplot(track_part %>% distinct(track.id,loudness,genres), aes(loudness,group = genres, color = genres)) + geom_boxplot() +theme_bw()
+acoustic_box <- ggplot(track_part %>% distinct(track.id,acousticness,genres), aes(acousticness,group = genres, color = genres)) + geom_boxplot() +theme_bw()
+tempo_box <- ggplot(track_part %>% distinct(track.id,tempo,genres), aes(tempo,group = genres, color = genres)) + geom_boxplot() +theme_bw()
+dance_box + loud_box + acoustic_box + tempo_box
+```
+tanto danceability como tempo dan diagramas bastante distribuidos. Aunque acousticness y loudness agrupan muchos conjuntos, dejan muy lejos la musica clásica. Por tanto, estas 4 variables parece que podran identificar diferencias entre grupos, siendo acousticness y loudness especialmente efectivas para diferenciar musica clásica.
+
+Se observa siempre el edm y el house siendo muy similares, por tanto, se va a analizar como el rock y el metal cuantas canciones conjuntas tienen.
+
+```{r house edm}
+ggplot(
+  track_part %>%
+    select(track.id, genres) %>%
+    filter(genres %in% c("edm", "house")) %>%
+    mutate(is = TRUE) %>%
+    pivot_wider(names_from = genres, values_from = is, values_fill = FALSE) %>%
+    mutate(value = paste(edm, house)),
+  aes(value)) +
+  scale_x_discrete(labels = c("edm", "house", "ambas")) + # cambiar texto x
+  xlab("") + # quitar etiqueta x
+  geom_bar() +
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5) + # poner num
+  theme_bw()
+
+```
+Tengo que revisar esta grafica, pero parece que todo el house esta dentro de edm, mientras que el edm tiene 19 unicas. Por tanto, es interesante quitar el house o unificarlos en un genero (electónica). Tras este ultimo filtro, vamos a hacer un estudio general de la dsitribucion de los datos. Para ello estudiaremos su densidad en funcion de las distintas variables, eliminando los datos de house. Lo que se esperan son graficas con varios picos y que no esten muy concertradas en un unico punto (esto querria decir que todos los generos se concentran en un valor para esa variable y no sera buena para clasificar)
+
+```{r general analisis of features}
+track_part_final <- track_part %>% filter(genres %!in% c("house"))
+ggplot(track_part_final) + geom_density(aes(danceability)) + geom_density(aes(energy)) + geom_density(aes(loudness)) + geom_density(aes(speechiness)) + geom_density(aes(acousticness)) + geom_density(aes(instrumentalness))
+#ACABR ESTO, AUN NO SE VE BIEN Y PEUDE QUE NECESITE DIVIDIR LAS GRAFICAS.
+```
+
+
+
+
+

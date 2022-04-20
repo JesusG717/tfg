@@ -165,15 +165,72 @@ De momentp, voy a pasar mode a numerica directamente y a estandarizar key.
 ```{r key mode}
 track_part_final <- track_part_final %>% left_join(key_mode, by = c("track.id","genres"))
 track_part_final <- track_part_final %>% mutate(key = key/11)
+track_part_final <- track_part_final %>% select(-c("generic_genre"))
 save(track_part_final, file = "track_part_final.RData")
 ```
 
 Ahora tenemos un dataset de canciones con una serie de generos (7), y buscamos ver que variables diferencian mejor los generos. Primero, hagamos una exploracion para ver cuantos clusters nos da el indice CH y el silhouette.
 
 ```{r number of clusters}
- CH <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans",index = "ch")
- S <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans",index = "silhouette")
+#hago el numero de clusters para 3 metodos: kmeans, single, complete
+ CH_graph <- c()
+k <- c(2:10)
+for (i in 2:length(k)) {
+  CH_single <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "single", index = "ch")
+  CH_single <- t(CH_single$Best.nc)
+  colnames(CH_single) <- c("Number_Clusters","Single")
+  CH_complete <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "complete", index = "ch")
+  CH_complete <- t(CH_complete$Best.nc)
+  colnames(CH_complete) <- c("Number_Clusters","Complete")
+
+  CH_kmeans <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "kmeans", index = "ch")
+  CH_kmeans <- t(CH_kmeans$Best.nc)
+  colnames(CH_kmeans) <- c("Number_Clusters","K means")
+  aux <- cbind(CH_kmeans,CH_single[2],CH_complete[2])
+  CH_graph <- rbind(CH_graph,aux)
+  
+}
+colnames(CH_graph) <- c("Number_Clusters","K.means","Single","Complete")
+CH_graph <- data.frame(CH_graph)
+CH_plot <- ggplot(CH_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
+  geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
+  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green')
+
+
+
+S_graph <- c()
+for (i in 2:length(k)) {
+  S_single <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "single", index = "silhouette")
+  S_single <- t(S_single$Best.nc)
+  colnames(S_single) <- c("Number_Clusters","Single")
+  S_complete <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "complete", index = "silhouette")
+  S_complete <- t(S_complete$Best.nc)
+  colnames(S_complete) <- c("Number_Clusters","Complete")
+
+  S_kmeans <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "kmeans", index = "silhouette")
+  S_kmeans <- t(S_kmeans$Best.nc)
+  colnames(S_kmeans) <- c("Number_Clusters","K means")
+  aux <- cbind(S_kmeans,S_single[2],S_complete[2])
+  S_graph <- rbind(S_graph,aux)
+  colnames(S_graph) <- c("Number_Clusters","K means","Single","Complete")
+}
+colnames(S_graph) <- c("Number_Clusters","K.means","Single","Complete")
+S_graph <- data.frame(S_graph)
+S_plot <- ggplot(S_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
+  geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
+  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green')
+
+
+
+
+CH_plot+S_plot
 ```
-NEXT: pensar alguna interpretación más previa (ver dsitribuciones dentro de diferentes generos ¿?) y analizar la nueva particion e interpretar los resultados.
+ARREGLAR LOS TITULOS Y LEYENDAS DE LAS GRAFICAS DE ARRIBA
+Comentar las diferencias entre numero de clusters de cada algoritmo. Tratar de determinar el mas efectivo para buscar una clasificacion por generos (numero de clusters cercano a 7)
+
+
+NEXT: pensar alguna interpretación más previa (ver dsitribuciones dentro de diferentes generos ¿?) y analizar la nueva particion e interpretar los resultados. Tambien tratar de hacer comparaciones entre 2 generos para ver diferenciacion directa entre generos y probar varios algoritmos.
+
+Para interpretar los datos finales mirar cosas de matrices de confusion.
 
 

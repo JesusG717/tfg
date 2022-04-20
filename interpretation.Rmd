@@ -117,6 +117,10 @@ Tengo que revisar esta grafica, pero parece que todo el house esta dentro de edm
 
 ```{r general analisis of features}
 track_part_final <- track_part %>% filter(genres %!in% c("house"))
+
+#GUARDO LA PARTICION FINAL
+save(track_part_final, file = "track_part_final.RData")
+
 den1 <- ggplot(track_part_final) + geom_density(aes(loudness), color = 'green') + geom_density(aes(speechiness), color = 'orange') + geom_density(aes(liveness), color = 'purple') + geom_density(aes(tempo), color = 'darkslateblue') + xlab('feature')
 
 den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature')
@@ -155,6 +159,21 @@ ggplot(track_part_final %>%
 
 INSERTA analisis musical profundo que de momento no soy capaz de hacer. De moento veo en general disparidad de modo segun tonalidad salvo en unas pocas excepciones, y estas siempre tienen un conteo bajo.
 
+
+De momentp, voy a pasar mode a numerica directamente y a estandarizar key.
+
+```{r key mode}
+track_part_final <- track_part_final %>% left_join(key_mode, by = c("track.id","genres"))
+track_part_final <- track_part_final %>% mutate(key = key/11)
+save(track_part_final, file = "track_part_final.RData")
+```
+
+Ahora tenemos un dataset de canciones con una serie de generos (7), y buscamos ver que variables diferencian mejor los generos. Primero, hagamos una exploracion para ver cuantos clusters nos da el indice CH y el silhouette.
+
+```{r number of clusters}
+ CH <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans",index = "ch")
+ S <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(method = "kmeans",index = "silhouette")
+```
 NEXT: pensar alguna interpretación más previa (ver dsitribuciones dentro de diferentes generos ¿?) y analizar la nueva particion e interpretar los resultados.
 
 

@@ -121,9 +121,9 @@ track_part_final <- track_part %>% filter(genres %!in% c("house"))
 #GUARDO LA PARTICION FINAL
 save(track_part_final, file = "track_part_final.RData")
 
-den1 <- ggplot(track_part_final) + geom_density(aes(loudness), color = 'green') + geom_density(aes(speechiness), color = 'orange') + geom_density(aes(liveness), color = 'purple') + geom_density(aes(tempo), color = 'darkslateblue') + xlab('feature')
+den1 <- ggplot(track_part_final) + geom_density(aes(loudness), color = 'green') + geom_density(aes(speechiness), color = 'orange') + geom_density(aes(liveness), color = 'purple') + geom_density(aes(tempo), color = 'darkslateblue') + xlab('feature') + theme_bw()
 
-den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature')
+den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature') + theme_bw()
 den1+den2
 ```
 Se observa en general un comportamiento mucho más variado y sin demasiada repetición. Cada pequeño pico se podría pensar como una posible zona de alta densidad de datos, y por tanto buen candidato para centro de cluster. ¿Relacionarlo con un posible inicio óptimo de kmeans o con el OPTICS y DBSCAN?.
@@ -169,6 +169,13 @@ track_part_final <- track_part_final %>% select(-c("generic_genre"))
 save(track_part_final, file = "track_part_final.RData")
 ```
 
+Se que hay keys relacionadas y keys paralelas. De momento como no tengo mucha idea de musica, voy a ir poco a poco. El modo debería ser una medida que acerca canciones si lo comparten (major upbeat y happy; minor mas sad). Para tratar de establecer alguna relacion usando el ciruculo de quintas, voy a hacer una variable que relacione cada tonalidad con su escala relativa menor. (ni idea de si esta justificado, pero parece que Do M deberia de verse mas cerca de A m que de D M por ejemplo)
+
+```{r key realtions}
+ track_part_final <- track_part_final %>% mutate(fifths = (1-mode)*key + mode*((key+3/11) %% 1))
+```
+
+
 Ahora tenemos un dataset de canciones con una serie de generos (7), y buscamos ver que variables diferencian mejor los generos. Primero, hagamos una exploracion para ver cuantos clusters nos da el indice CH y el silhouette.
 
 ```{r number of clusters}
@@ -194,7 +201,7 @@ colnames(CH_graph) <- c("Number_Clusters","K.means","Single","Complete")
 CH_graph <- data.frame(CH_graph)
 CH_plot <- ggplot(CH_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
   geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
-  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green')
+  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green') + xlab('Número de Clusters') + ylab('Índice CH') + theme_bw()
 
 
 
@@ -218,9 +225,12 @@ colnames(S_graph) <- c("Number_Clusters","K.means","Single","Complete")
 S_graph <- data.frame(S_graph)
 S_plot <- ggplot(S_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
   geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
-  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green')
+  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green') + xlab('Número de Clusters') + ylab('Índice de Silueta') + 
+  theme_bw()
 
-
+#no se poner leyendas para cada grafica: verde complete
+#                                        rojo single
+#                                        azul kmeans
 
 
 CH_plot+S_plot

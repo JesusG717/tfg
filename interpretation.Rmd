@@ -3,6 +3,7 @@ title: "Interpretacion datos"
 output: html_document
 ---
 
+
 ```{r setup, include=FALSE}
 source('01_setup.R')
 load('track_features.RData')
@@ -75,6 +76,8 @@ De momento voy a considerar solo el genero rock e ignorare el metal. Aun con eso
 Voy a coger una particion de los datos sin metal y con solo 50 canciones de metal.
 
 ```{r partition}
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
 set.seed(1)
 r <- track_features %>% filter(genres %in% c('rock')) %>% slice_sample(n=50) 
 track_part <- track_features %>% filter(genres %!in% c('rock','metal')) %>% rbind(r)
@@ -163,7 +166,7 @@ INSERTA analisis musical profundo que de momento no soy capaz de hacer. De moent
 De momentp, voy a pasar mode a numerica directamente y a estandarizar key.
 
 ```{r key mode}
-track_part_final <- track_part_final %>% left_join(key_mode, by = c("track.id","genres"))
+
 track_part_final <- track_part_final %>% mutate(key = key/11)
 track_part_final <- track_part_final %>% select(-c("generic_genre"))
 save(track_part_final, file = "track_part_final.RData")
@@ -172,8 +175,12 @@ save(track_part_final, file = "track_part_final.RData")
 Se que hay keys relacionadas y keys paralelas. De momento como no tengo mucha idea de musica, voy a ir poco a poco. El modo debería ser una medida que acerca canciones si lo comparten (major upbeat y happy; minor mas sad). Para tratar de establecer alguna relacion usando el ciruculo de quintas, voy a hacer una variable que relacione cada tonalidad con su escala relativa menor. (ni idea de si esta justificado, pero parece que Do M deberia de verse mas cerca de A m que de D M por ejemplo)
 
 ```{r key realtions}
- track_part_final <- track_part_final %>% mutate(fifths = (1-mode)*key + mode*((key+3/11) %% 1))
+ track_part_final <- track_part_final %>% mutate(mode = as.numeric(mode))
+ track_part_final <- track_part_final %>% mutate(fifths = (2-mode)*key + (mode-1)*((key+3/11) %% 1))
+ ggplot(track_part_final) + geom_density(aes(fifths,color = "Ciclo de quintas"),color = 'red') + geom_density(aes(key,color = "key"),color = 'green') + scale_color_manual(name = "Key vs Nueva variable", values = c("Ciclo de quintas" = "red", "key" = "green")) + theme_bw()
 ```
+
+Se observa como la distribucion de canciones cambia bastante en esta nueva variable. Solo me falta saber si lo que muestra tiene sentido.
 
 
 Ahora tenemos un dataset de canciones con una serie de generos (7), y buscamos ver que variables diferencian mejor los generos. Primero, hagamos una exploracion para ver cuantos clusters nos da el indice CH y el silhouette.
@@ -235,12 +242,81 @@ S_plot <- ggplot(S_graph) + geom_point(mapping = aes(Number_Clusters,K.means),co
 
 CH_plot+S_plot
 ```
-ARREGLAR LOS TITULOS Y LEYENDAS DE LAS GRAFICAS DE ARRIBA
-Comentar las diferencias entre numero de clusters de cada algoritmo. Tratar de determinar el mas efectivo para buscar una clasificacion por generos (numero de clusters cercano a 7)
+Se observa como el indice CH se inclina más por 3 clusters, mientras que en el silueta se ve algo más de variedad. Consiguiendo números cercanos a 7 salvo con el metodo complete. En principio de momento vamos a suponer que hay 7 clusters (a corde con los generos), pero se intentará buscar significado a los valores altos de CH y el complete en silueta para k = 3. notar que es raro que el single de valores de k mas altos que el complete en el caso de silueta, cosa que intuitivamente no deberia pasar (chain effect)
 
 
-NEXT: pensar alguna interpretación más previa (ver dsitribuciones dentro de diferentes generos ¿?) y analizar la nueva particion e interpretar los resultados. Tambien tratar de hacer comparaciones entre 2 generos para ver diferenciacion directa entre generos y probar varios algoritmos.
 
+Vamos a realizar un primer clustering con k = 7 y usando jerarquico con single, kmeans y dbscan. Para dbscan se usarán Minpts 20 y un epsilon de manera que la cantidad de clusters sea cercana a 7.
+
+```{r clustering}
+k <- 7 #num clusters
+km <- track_part_final %>% select(-c("track.id","genres")) %>% kmeanspp(k,nstart = 15)
+single <- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% hclust(method = 'single') %>% 
+  cutree(k)
+complete<- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% hclust(method = 'complete') %>%
+  cutree(k)
+#busco una estimacion de un buen epsilon con knn
+#FALLO no se me pinta la knn graph bien y no entiendo
+#haciendolo sin ggplot me salia mas o menos 0.2 el cambio de pendiente
+plot_knn <- track_part_final %>% select(-c("track.id","genres")) %>%  kNNdist(k = 1) %>% sort() %>% data.frame() %>% mutate(N = c(1:nrow(plot_knn)))
+knn_p <- ggplot(plot_knn,aes(N,.)) + geom_point() + theme_bw()
+
+dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.42, minPts = 5)
+
+#OJO
+#esto es bastante estupido, al final siempre acabo cogiendo el epsilon y minpts que me da la gana para que cuadre
+#fallan todos los criterios
+
+
+results <- track_part_final %>% select(c("track.id","genres")) %>% mutate(km = factor(km$cluster),single = 
+                                                                            factor(single), 
+                                                                          complete = factor(complete), 
+                                                                            dbs = factor(dbs$cluster))
+summary(results)
+
+km_bars <- ggplot(results,aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'K-means')
+single_bars <- ggplot(results,aes(single,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'single')
+complete_bars <- ggplot(results,aes(complete,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'Complete')
+dbs_bars <- ggplot(results,aes(dbs,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'DBSCAN')
+km_bars
+single_bars
+complete_bars
+dbs_bars
+```
+Todos los algoritmos son capaces de separar la musica clásica, pero no diferencian bien los otros géneros. Además, el hecho de que los clusterings herarquicos ambos separen la musica clásica en varios grupos dice que estamos pidiendo demasiados grupos para nuestra intención. Ahora es necesario tratar de ver que hace que todos los generos no clásicos sean demasiado similares.
+Además, el dbscan ahora mismo es un desastre.
+
+Vamos a hacer como que el dbscan no existe de momento porque si no esto no va ningun lado. Me centro en entender que hace que todos los generos menos la musica clásico se vean similares. Para ello a separar en musica clasica y no clasica como con el rock y metal al principio
+
+```{r classical music difference}
+difference_classical <- track_part_final %>% mutate(generic_genre = as.numeric(genres == 'classical'))
+difference_classical <- difference_classical %>% mutate(generic_genre = as.factor(generic_genre))
+other <- difference_classical %>% filter(generic_genre == 0) %>% select(-'generic_genre')
+sapply(other,var)
+# danceability           energy         loudness      speechiness  acousticness 
+# 0.025819539      0.022333152      0.004291213      0.005216687   0.019094499   
+#instrumentalness         liveness          valence            tempo      key 
+#   0.072538149      0.016803100      0.056286858      0.031588148      0.097577745 
+#         mode           fifths 
+#      0.245466814      0.089987843
+#parece que las variables sppechiness y loudness tienen una varianza muy baja, vamos a compararlas
+speech <- ggplot(difference_classical,aes(speechiness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
+loud <- ggplot(difference_classical,aes(loudness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
+speech+loud
+```
+Se observa que estas dos variables estan muy concentradas para los generos a diferenciar. Para la musica clásica, la loudness tiene a ser baja pero dentro de una gama muy amplia, mientras que el speechiness siempre es bajisimo. Sin mebargo, el speechiness en general para todas las variables es muy bajo, por lo que no parece una gran variable para el clustering. Lo mismo para la loudness, parece que no es algo que diferencia los generos. Sin embargo, podría see la variable clave para diferenciar la musica clásica del resto.
+Nota: Liveness y acousticness son las siguientes variables a estudiar para ver si ayudan a confundir los generos o no (varianzas del orden de 0.01-0.02).
+
+
+Por tanto, ahora sería interesante comprobar esas dos hipótesis: se distinguiran mejor los generos sin estas variables? se confundira la musica clásica con el resto de generos al eliminar la loudness? hay que hacer mas clusterings para comprobarlo. 
+
+
+
+FUTURO:
 Para interpretar los datos finales mirar cosas de matrices de confusion.
 
 

@@ -26,13 +26,15 @@ Ahora vamos a estudiar como se distribuyen los tracks en diferentes en determina
 track_features <- track_features %>% mutate(generic_genre = as.factor((genres == 'metal')+ 2*(genres == 'rock')))
 levels(track_features$generic_genre) <- c('otro','metal','rock')
                                             
-ggplot(track_features %>% distinct(track.id,energy, acousticness, generic_genre), aes(energy, acousticness, color = generic_genre)) + geom_point() + theme_bw()
+scatter_rockmetal <- ggplot(track_features %>% distinct(track.id,energy, acousticness, generic_genre), aes(energy, acousticness, color = generic_genre)) + geom_point() + theme_bw()
+scatter_rockmetal
 ```
 Observamos que el metal y el rock se concentran en zonas de acousticness muy baja, por lo que no es una buena variable para diferenciar estos géneros. Además, aunque parece existir una correlación negativa entre estas dos variables, podria deberse solo a la gran cantidad de valores extremos tomados.
 
 Vamos a hacer lo mismo pero con danceability y speechiness
 ```{r danceability speechiness, echo=FALSE}
-ggplot(track_features %>% distinct(track.id,danceability, speechiness,generic_genre),aes(danceability, speechiness, color = generic_genre)) + geom_point() + theme_bw()
+scatter_rockmetal2 <- ggplot(track_features %>% distinct(track.id,danceability, speechiness,generic_genre),aes(danceability, speechiness, color = generic_genre)) + geom_point() + theme_bw()
+scatter_rockmetal2+scatter_rockmetal
 ```
 LA gran mayoria de canciones a analizar presentan valores muy bajos de speechiness. No muestra mucha información sobre los datos esto. Sin embargo, parece que la dispersión en dancability es bastante regular. Vamos a analizar más esto.
 ```{r danceability densidad}
@@ -107,16 +109,21 @@ ggplot(
     filter(genres %in% c("edm", "house")) %>%
     mutate(is = TRUE) %>%
     pivot_wider(names_from = genres, values_from = is, values_fill = FALSE) %>%
-    mutate(value = paste(edm, house)),
-  aes(value)) +
-  scale_x_discrete(labels = c("edm", "house", "ambas")) + # cambiar texto x
+    mutate(value = paste(edm, house)) %>% 
+    group_by(value) %>% 
+    count() %>%
+    bind_rows(tibble(value = "FALSE TRUE", n = 0)),
+  aes(value, n)) +
+  scale_x_discrete(labels = c("house","edm",  "ambas")) + # cambiar texto x
   xlab("") + # quitar etiqueta x
-  geom_bar() +
-  geom_text(stat='count', aes(label=..count..), vjust=-0.5) + # poner num
+  geom_bar(stat = "identity") +
+  geom_text(stat='identity', aes(label=n), vjust=-0.5) + # poner num
   theme_bw()
 
 ```
-Tengo que revisar esta grafica, pero parece que todo el house esta dentro de edm, mientras que el edm tiene 19 unicas. Por tanto, es interesante quitar el house o unificarlos en un genero (electónica). Tras este ultimo filtro, vamos a hacer un estudio general de la dsitribucion de los datos. Para ello estudiaremos su densidad en funcion de las distintas variables, eliminando los datos de house. Lo que se esperan son graficas con varios picos y que no esten muy concertradas en un unico punto (esto querria decir que todos los generos se concentran en un valor para esa variable y no sera buena para clasificar)
+parece que todo el house esta dentro de edm, mientras que el edm tiene 19 unicas. Por tanto, es interesante quitar el house o unificarlos en un genero (electónica). Tras este ultimo filtro, vamos a hacer un estudio general de la dsitribucion de los datos. Para ello estudiaremos su densidad en funcion de las distintas variables, eliminando los datos de house. Lo que se esperan son graficas con varios picos y que no esten muy concertradas en un unico punto (esto querria decir que todos los generos se concentran en un valor para esa variable y no sera buena para clasificar)
+
+track_part_final %>% select(-track.id, -genres, -generic_genre) %>% pivot_longer(everything()) %>% mutate(name = as.factor(name)) %>% ggplot(aes(value, color = name)) + geom_density()
 
 ```{r general analisis of features}
 track_part_final <- track_part %>% filter(genres %!in% c("house"))
@@ -124,10 +131,18 @@ track_part_final <- track_part %>% filter(genres %!in% c("house"))
 #GUARDO LA PARTICION FINAL
 save(track_part_final, file = "track_part_final.RData")
 
-den1 <- ggplot(track_part_final) + geom_density(aes(loudness), color = 'green') + geom_density(aes(speechiness), color = 'orange') + geom_density(aes(liveness), color = 'purple') + geom_density(aes(tempo), color = 'darkslateblue') + xlab('feature') + theme_bw()
+den1 <- ggplot(track_part_final) + 
+  geom_density(aes(loudness), color = 'green') + 
+  geom_density(aes(speechiness), color = 'orange') + 
+  geom_density(aes(liveness), color = 'purple') + 
+  geom_density(aes(tempo), color = 'darkslateblue') + 
+  xlab('feature') + theme_bw()
 
 den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature') + theme_bw()
 den1+den2
+
+
+
 ```
 Se observa en general un comportamiento mucho más variado y sin demasiada repetición. Cada pequeño pico se podría pensar como una posible zona de alta densidad de datos, y por tanto buen candidato para centro de cluster. ¿Relacionarlo con un posible inicio óptimo de kmeans o con el OPTICS y DBSCAN?.
 
@@ -176,147 +191,15 @@ Se que hay keys relacionadas y keys paralelas. De momento como no tengo mucha id
 
 ```{r key realtions}
  track_part_final <- track_part_final %>% mutate(mode = as.numeric(mode))
- track_part_final <- track_part_final %>% mutate(fifths = (2-mode)*key + (mode-1)*((key+3/11) %% 1))
- ggplot(track_part_final) + geom_density(aes(fifths,color = "Ciclo de quintas"),color = 'red') + geom_density(aes(key,color = "key"),color = 'green') + scale_color_manual(name = "Key vs Nueva variable", values = c("Ciclo de quintas" = "red", "key" = "green")) + theme_bw()
+ track_part_final <- track_part_final %>% mutate(fifths = (2-mode)*key/11 + (mode-1)*((key+3)/11) %% 1)
+
+ ggplot(track_part_final) + geom_density(aes(fifths,color = "Ciclo de quintas"),color = 'red') + scale_color_manual(name = "Nueva variable fifths", values = c("Ciclo de quintas" = "red")) + theme_bw()
+ track_part_final <- track_part_final %>% select(-c("key","mode"))
+ save(track_part_final, file = 'track_part_final.RData')
 ```
 
 Se observa como la distribucion de canciones cambia bastante en esta nueva variable. Solo me falta saber si lo que muestra tiene sentido.
 
 
-Ahora tenemos un dataset de canciones con una serie de generos (7), y buscamos ver que variables diferencian mejor los generos. Primero, hagamos una exploracion para ver cuantos clusters nos da el indice CH y el silhouette.
-
-```{r number of clusters}
-#hago el numero de clusters para 3 metodos: kmeans, single, complete
- CH_graph <- c()
-k <- c(2:10)
-for (i in 2:length(k)) {
-  CH_single <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "single", index = "ch")
-  CH_single <- t(CH_single$Best.nc)
-  colnames(CH_single) <- c("Number_Clusters","Single")
-  CH_complete <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "complete", index = "ch")
-  CH_complete <- t(CH_complete$Best.nc)
-  colnames(CH_complete) <- c("Number_Clusters","Complete")
-
-  CH_kmeans <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "kmeans", index = "ch")
-  CH_kmeans <- t(CH_kmeans$Best.nc)
-  colnames(CH_kmeans) <- c("Number_Clusters","K means")
-  aux <- cbind(CH_kmeans,CH_single[2],CH_complete[2])
-  CH_graph <- rbind(CH_graph,aux)
-  
-}
-colnames(CH_graph) <- c("Number_Clusters","K.means","Single","Complete")
-CH_graph <- data.frame(CH_graph)
-CH_plot <- ggplot(CH_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
-  geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
-  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green') + xlab('Número de Clusters') + ylab('Índice CH') + theme_bw()
-
-
-
-S_graph <- c()
-for (i in 2:length(k)) {
-  S_single <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "single", index = "silhouette")
-  S_single <- t(S_single$Best.nc)
-  colnames(S_single) <- c("Number_Clusters","Single")
-  S_complete <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "complete", index = "silhouette")
-  S_complete <- t(S_complete$Best.nc)
-  colnames(S_complete) <- c("Number_Clusters","Complete")
-
-  S_kmeans <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(min.nc = i, max.nc = i, method = "kmeans", index = "silhouette")
-  S_kmeans <- t(S_kmeans$Best.nc)
-  colnames(S_kmeans) <- c("Number_Clusters","K means")
-  aux <- cbind(S_kmeans,S_single[2],S_complete[2])
-  S_graph <- rbind(S_graph,aux)
-  colnames(S_graph) <- c("Number_Clusters","K means","Single","Complete")
-}
-colnames(S_graph) <- c("Number_Clusters","K.means","Single","Complete")
-S_graph <- data.frame(S_graph)
-S_plot <- ggplot(S_graph) + geom_point(mapping = aes(Number_Clusters,K.means),color = 'darkblue',size = 3) + geom_line(aes(Number_Clusters,K.means),color = 'cyan') + 
-  geom_point(mapping = aes(Number_Clusters,Single),color = 'darkred',size = 3) + geom_line(aes(Number_Clusters,Single),color = 'red') + 
-  geom_point(mapping = aes(Number_Clusters,Complete),color = 'darkgreen',size = 3) + geom_line(aes(Number_Clusters,Complete),color = 'green') + xlab('Número de Clusters') + ylab('Índice de Silueta') + 
-  theme_bw()
-
-#no se poner leyendas para cada grafica: verde complete
-#                                        rojo single
-#                                        azul kmeans
-
-
-CH_plot+S_plot
-```
-Se observa como el indice CH se inclina más por 3 clusters, mientras que en el silueta se ve algo más de variedad. Consiguiendo números cercanos a 7 salvo con el metodo complete. En principio de momento vamos a suponer que hay 7 clusters (a corde con los generos), pero se intentará buscar significado a los valores altos de CH y el complete en silueta para k = 3. notar que es raro que el single de valores de k mas altos que el complete en el caso de silueta, cosa que intuitivamente no deberia pasar (chain effect)
-
-
-
-Vamos a realizar un primer clustering con k = 7 y usando jerarquico con single, kmeans y dbscan. Para dbscan se usarán Minpts 20 y un epsilon de manera que la cantidad de clusters sea cercana a 7.
-
-```{r clustering}
-k <- 7 #num clusters
-km <- track_part_final %>% select(-c("track.id","genres")) %>% kmeanspp(k,nstart = 15)
-single <- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% hclust(method = 'single') %>% 
-  cutree(k)
-complete<- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% hclust(method = 'complete') %>%
-  cutree(k)
-#busco una estimacion de un buen epsilon con knn
-#FALLO no se me pinta la knn graph bien y no entiendo
-#haciendolo sin ggplot me salia mas o menos 0.2 el cambio de pendiente
-plot_knn <- track_part_final %>% select(-c("track.id","genres")) %>%  kNNdist(k = 1) %>% sort() %>% data.frame() %>% mutate(N = c(1:nrow(plot_knn)))
-knn_p <- ggplot(plot_knn,aes(N,.)) + geom_point() + theme_bw()
-
-dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.42, minPts = 5)
-
-#OJO
-#esto es bastante estupido, al final siempre acabo cogiendo el epsilon y minpts que me da la gana para que cuadre
-#fallan todos los criterios
-
-
-results <- track_part_final %>% select(c("track.id","genres")) %>% mutate(km = factor(km$cluster),single = 
-                                                                            factor(single), 
-                                                                          complete = factor(complete), 
-                                                                            dbs = factor(dbs$cluster))
-summary(results)
-
-km_bars <- ggplot(results,aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'K-means')
-single_bars <- ggplot(results,aes(single,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'single')
-complete_bars <- ggplot(results,aes(complete,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'Complete')
-dbs_bars <- ggplot(results,aes(dbs,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'DBSCAN')
-km_bars
-single_bars
-complete_bars
-dbs_bars
-```
-Todos los algoritmos son capaces de separar la musica clásica, pero no diferencian bien los otros géneros. Además, el hecho de que los clusterings herarquicos ambos separen la musica clásica en varios grupos dice que estamos pidiendo demasiados grupos para nuestra intención. Ahora es necesario tratar de ver que hace que todos los generos no clásicos sean demasiado similares.
-Además, el dbscan ahora mismo es un desastre.
-
-Vamos a hacer como que el dbscan no existe de momento porque si no esto no va ningun lado. Me centro en entender que hace que todos los generos menos la musica clásico se vean similares. Para ello a separar en musica clasica y no clasica como con el rock y metal al principio
-
-```{r classical music difference}
-difference_classical <- track_part_final %>% mutate(generic_genre = as.numeric(genres == 'classical'))
-difference_classical <- difference_classical %>% mutate(generic_genre = as.factor(generic_genre))
-other <- difference_classical %>% filter(generic_genre == 0) %>% select(-'generic_genre')
-sapply(other,var)
-# danceability           energy         loudness      speechiness  acousticness 
-# 0.025819539      0.022333152      0.004291213      0.005216687   0.019094499   
-#instrumentalness         liveness          valence            tempo      key 
-#   0.072538149      0.016803100      0.056286858      0.031588148      0.097577745 
-#         mode           fifths 
-#      0.245466814      0.089987843
-#parece que las variables sppechiness y loudness tienen una varianza muy baja, vamos a compararlas
-speech <- ggplot(difference_classical,aes(speechiness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
-loud <- ggplot(difference_classical,aes(loudness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
-speech+loud
-```
-Se observa que estas dos variables estan muy concentradas para los generos a diferenciar. Para la musica clásica, la loudness tiene a ser baja pero dentro de una gama muy amplia, mientras que el speechiness siempre es bajisimo. Sin mebargo, el speechiness en general para todas las variables es muy bajo, por lo que no parece una gran variable para el clustering. Lo mismo para la loudness, parece que no es algo que diferencia los generos. Sin embargo, podría see la variable clave para diferenciar la musica clásica del resto.
-Nota: Liveness y acousticness son las siguientes variables a estudiar para ver si ayudan a confundir los generos o no (varianzas del orden de 0.01-0.02).
-
-
-Por tanto, ahora sería interesante comprobar esas dos hipótesis: se distinguiran mejor los generos sin estas variables? se confundira la musica clásica con el resto de generos al eliminar la loudness? hay que hacer mas clusterings para comprobarlo. 
-
-
-
-FUTURO:
-Para interpretar los datos finales mirar cosas de matrices de confusion.
 
 

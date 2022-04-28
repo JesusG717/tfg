@@ -230,7 +230,9 @@ Cosas que se pueden deducir:
   Vamos a hacer otro intento de distinguir el edm. Para ello usamos instrumentalness y fifths.
   
 ```{r edm distinto}
-k <- 7
+track_part_final %>% select(c("instrumentalness","fifths")) %>% NbClust(, method = 'kmeans',index = "silhouette")
+#ve siempre 2
+k <- 2
 km <- track_part_final %>% select(c("instrumentalness","fifths")) %>% kmeans(k,nstart = 20)
 comp <- track_part_final %>% select(c("instrumentalness","fifths")) %>% dist() %>% hclust(method = 'complete') %>%
   cutree(k)
@@ -240,14 +242,18 @@ summary(results4)
 
 #km_bars <- ggplot(results,aes(km,group = genres, fill = genres)) + geom_bar(position="dodge")+theme_bw() + 
   #labs(title = 'K-means')
-km_bars4 <- ggplot(results4,aes(instrumentalness, fifths,group = km, color = km,size = genres)) + geom_point()+theme_bw() + 
-  labs(title = 'K-means')
+km_bars4 <- ggplot(results4,aes(km,group = genres, color = genres,fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'K-means') +
+  facet_grid(~genres)
 
-complete_bars4 <- ggplot(results4,aes(instrumentalness, fifths,group = complete, color = complete, size = genres)) + geom_point()+theme_bw() + 
-  labs(title = 'Complete')
+complete_bars4 <- ggplot(results4,aes(complete,group = genres, color = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'Complete') + 
+  facet_grid(~genres)
+
+preview <- ggplot(results4,aes(instrumentalness,fifths, color =genres)) +geom_point() + theme_bw()
 km_bars4
 complete_bars4
-
+preview
   
 ```
 No hay manera de ver mas. Esto es probablemente a que con pocos datos y todos entre el 0y 1 se superponen y dificultan encontrar clusters. El siguiente paso será tratar de ver si se pueden aislar determinados generos clasificando en una variable o dos y asi realizar una clasificación por etapas. 

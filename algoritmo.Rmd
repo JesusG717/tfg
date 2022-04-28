@@ -1,0 +1,79 @@
+---
+title: "algoritmo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+source('01_setup.R')
+load('track_part_final.RData')
+```
+Voy a intentar ir viendo como hacer un algoritmo que distinga los géneros.
+
+Un primer clustering para eliminar la música clásica.
+
+```{r classic}
+km <- track_part_final %>% select(-c("track.id","genres")) %>% NbClust(method = 'kmeans',index = 'ch', max.nc = 3)
+filter_classical <- track_part_final %>% mutate(classic = as.factor(km$Best.partition))
+bars <- ggplot(filter_classical, aes(classic, group = genres, color = genres, fill = genres)) + geom_bar() +
+  theme_bw() + 
+  facet_grid(~genres)
+bars
+#para identificar que grupo es el de clasica, estudiar el que tenga mas instrumentalness y acousticness (justificación en la parte de clsification.Rmd)
+criterio_clasica <- c()#inicializo un vector que me guarda la media de las variables que quiero
+for (i in levels(filter_classical$classic)) {
+  #calculo las medias para cada grupo
+  aux <- filter_classical %>% filter(classic == i) %>% select(c("acousticness","instrumentalness")) %>%
+    sapply(mean)
+  aux <- aux %>% mean()
+  #las guardo en el criterio
+  criterio_clasica <- c(criterio_clasica,aux)
+}
+#busco el grupo con mayor media, y su indice sera el indice del nivel que guarda la musica clasica
+levels(filter_classical$classic)[which.max(criterio_clasica)] <- c("clasica")
+levels(filter_classical$classic)
+#ahora creo unos datos que vayan guardando los reusltados
+results <- track_part_final %>% select(c("track.id","genres")) %>% mutate(filtro_clasica = filter_classical$classic)
+```
+
+Con esto consigo separar la musica clásica. Tengo que seguir usando el data frame filter_classical, y filtrar 
+classic != "clasica". Después de este primer filtrado, se puede tratar de extraer otro genero.
+Los resultados los he guardado en results.
+
+
+
+Voy a intentar hacer un filtrado con dbscan
+```{r filtro dbscan}
+
+```
+
+
+```{r second filter}
+df <- filter_classical %>% filter(classic != c("clasica")) %>% select(-c("classic"))
+km1 <- df %>% select(-c("track.id","genres")) %>% select(-c("speechiness","liveness","acousticness")) %>% NbClust(method = 'kmeans',index = "ch")
+km2 <- df %>% select(-c("track.id","genres")) %>% select(-c("speechiness","liveness","acousticness")) %>% NbClust(method = 'kmeans',index = "silhouette")
+
+comp1 <- df %>% select(-c("track.id","genres")) %>% select(-c("speechiness","liveness","acousticness","instrumentalness")) %>% NbClust(method = 'complete',index = "ch")
+comp2 <- df %>% select(-c("track.id","genres")) %>% select(-c("speechiness","liveness","acousticness","instrumentalness")) %>% NbClust(method = 'complete',index = "silhouette")
+df <- df %>% mutate(km_ch = as.factor(km1$Best.partition), km_s = as.factor(km2$Best.partition),
+                    comp_ch = as.factor(comp1$Best.partition), comp_s = as.factor(comp2$Best.partition))
+km_bars1 <- ggplot(df, aes(km_ch, group = genres, color = genres, fill = genres)) + geom_bar() +
+  theme_bw() + 
+  facet_grid(~genres)
+km_bars2 <- ggplot(df, aes(km_s, group = genres, color = genres, fill = genres)) + geom_bar() +
+  theme_bw() + 
+  facet_grid(~genres)
+comp_bars1 <- ggplot(df, aes(comp_ch, group = genres, color = genres, fill = genres)) + geom_bar() +
+  theme_bw() + 
+  facet_grid(~genres)
+comp_bars2 <- ggplot(df, aes(comp_s, group = genres, color = genres, fill = genres)) + geom_bar() +
+  theme_bw() + 
+  facet_grid(~genres)
+km_bars1
+km_bars2
+comp_bars1
+comp_bars2
+
+
+
+
+```

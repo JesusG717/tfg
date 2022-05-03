@@ -76,7 +76,7 @@ Vamos a realizar un primer clustering con k = 7 y usando jerarquico con single, 
 ```{r clustering}
 
 
-k <- 7 #num clusters
+k <- 5 #num clusters
 km <- track_part_final %>% select(-c("track.id","genres")) %>% kmeans(k,nstart = 15)
 single <- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% hclust(method = 'single') %>% 
   cutree(k)
@@ -92,7 +92,7 @@ knn_p <- ggplot(df,aes(N,plot_knn)) + geom_point() + theme_bw()
 knn_p
 
 
-dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.12, minPts = 5)
+dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.17, minPts = 7)
 
 #OJO
 #esto es bastante estupido, al final siempre acabo cogiendo el epsilon y minpts que me da la gana para que cuadre

@@ -83,8 +83,8 @@ Voy a coger una particion de los datos sin metal y con solo 50 canciones de meta
 set.seed(1)
 r <- track_features %>% filter(genres %in% c('rock')) %>% slice_sample(n=50) 
 track_part <- track_features %>% filter(genres %!in% c('rock','metal')) %>% rbind(r)
-count_genre <-  ggplot(track_part, aes(genres)) + geom_bar() + theme_bw() + geom_text(stat = 'count', aes(label = ..count.., vjust = -0.2))
-corr_features <- ggcorr(track_part %>% select(-c('track.id','genres')))
+count_genre <-  ggplot(track_part_final, aes(genres)) + geom_bar() + theme_bw() + geom_text(stat = 'count', aes(label = ..count.., vjust = -0.2)) + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=0.2))
+corr_features <- ggcorr(track_part_final %>% select(-c('track.id','genres')))
 count_genre + corr_features
 
 
@@ -97,6 +97,10 @@ loud_box <- ggplot(track_part %>% distinct(track.id,loudness,genres), aes(loudne
 acoustic_box <- ggplot(track_part %>% distinct(track.id,acousticness,genres), aes(acousticness,group = genres, color = genres)) + geom_boxplot() +theme_bw()
 tempo_box <- ggplot(track_part %>% distinct(track.id,tempo,genres), aes(tempo,group = genres, color = genres)) + geom_boxplot() +theme_bw()
 dance_box + loud_box + acoustic_box + tempo_box
+
+
+
+
 ```
 tanto danceability como tempo dan diagramas bastante distribuidos. Aunque acousticness y loudness agrupan muchos conjuntos, dejan muy lejos la musica clásica. Por tanto, estas 4 variables parece que podran identificar diferencias entre grupos, siendo acousticness y loudness especialmente efectivas para diferenciar musica clásica.
 
@@ -126,8 +130,8 @@ parece que todo el house esta dentro de edm, mientras que el edm tiene 19 unicas
 track_part_final %>% select(-track.id, -genres, -generic_genre) %>% pivot_longer(everything()) %>% mutate(name = as.factor(name)) %>% ggplot(aes(value, color = name)) + geom_density()
 
 ```{r general analisis of features}
-track_part_final <- track_part %>% filter(genres %!in% c("house"))
-
+track_part_final <- track_part %>% filter(genres %!in% c("house","pop"))
+track_part_final <- track_part_final %>% filter(genres %!in% c("reggaeton"))
 #GUARDO LA PARTICION FINAL
 save(track_part_final, file = "track_part_final.RData")
 
@@ -140,6 +144,7 @@ den1 <- ggplot(track_part_final) +
 
 den2 <- ggplot(track_part_final) + geom_density(aes(instrumentalness), color = 'cyan') + geom_density(aes(valence), color = 'chocolate') + geom_density(aes(acousticness),color = 'pink') + geom_density(aes(danceability), color = 'darkmagenta') + geom_density(aes(energy), color = 'red') + xlab('feature') + theme_bw()
 den1+den2
+track_part_final %>% select(-track.id, -genres, -generic_genre) %>% pivot_longer(everything()) %>% mutate(name = as.factor(name)) %>% ggplot(aes(value, color = name)) + geom_density()+theme_bw()
 
 
 

@@ -129,9 +129,9 @@ Con esta primera clasificación, el dbscan es un desastre. También vemos como e
 Vamos a hacer como que el dbscan no existe de momento porque si no esto no va ningun lado. Me centro en entender que hace que todos los generos menos la musica clásico se vean similares. Para ello a separar en musica clasica y no clasica como con el rock y metal al principio
 
 ```{r classical music difference}
-difference_classical <- track_part_final %>% mutate(generic_genre = as.numeric(genres == 'classical'))
-difference_classical <- difference_classical %>% mutate(generic_genre = as.factor(generic_genre))
-other <- difference_classical %>% filter(generic_genre == 0) %>% select(-'generic_genre')
+difference_classical <- track_part_final %>% mutate(is.classical = as.numeric(genres == 'classical'))
+difference_classical <- difference_classical %>% mutate(is.classical = as.factor(is.classical))
+other <- difference_classical %>% filter(is.classical == 0) %>% select(-'is.classical')
 sapply(other,var)
 # danceability           energy         loudness      speechiness  acousticness 
 # 0.025819539      0.022333152      0.004291213      0.005216687   0.019094499   
@@ -140,8 +140,8 @@ sapply(other,var)
 #         mode           fifths 
 #      0.245466814      0.089987843
 #parece que las variables sppechiness y loudness tienen una varianza muy baja, vamos a compararlas
-speech <- ggplot(difference_classical,aes(speechiness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
-loud <- ggplot(difference_classical,aes(loudness,group = generic_genre,color = generic_genre)) + geom_density() + theme_bw()
+speech <- ggplot(difference_classical,aes(speechiness,group = is.classical,color = is.classical)) + geom_density() + theme_bw()
+loud <- ggplot(difference_classical,aes(loudness,group = is.classical,color = is.classical)) + geom_density() + theme_bw()
 speech+loud
 ```
 Se observa que estas dos variables estan muy concentradas para los generos a diferenciar. Para la musica clásica, la loudness tiene a ser baja pero dentro de una gama muy amplia, mientras que el speechiness siempre es bajisimo. Sin mebargo, el speechiness en general para todas las variables es muy bajo, por lo que no parece una gran variable para el clustering. Lo mismo para la loudness, parece que no es algo que diferencia los generos. Sin embargo, podría see la variable clave para diferenciar la musica clásica del resto.
@@ -150,7 +150,7 @@ Nota: Liveness y acousticness son las siguientes variables a estudiar para ver s
 Vamos a realizar un nuevo clustering, esta vez eliminando speechiness y loudness
 ```{r clustering2}
 df_aux <- track_part_final %>% select(-c("track.id","genres","speechiness", "loudness"))
-k <- 7
+k <- 5
 Km <- df_aux %>% kmeans(k,iter.max = 20)
 comp <- df_aux %>% dist() %>% hclust(method = 'complete') %>% cutree(k)
 
@@ -183,7 +183,7 @@ Se observa como la acousticness es otra feature clave para reconocer la musica c
 
 ```{r clustering3}
 df_aux <- track_part_final %>% select(-c("track.id","genres","speechiness", "loudness","liveness"))
-k <- 7
+k <- 5
 Km <- df_aux %>% kmeans(k,iter.max = 20)
 comp <- df_aux %>% dist() %>% hclust(method = 'complete') %>% cutree(k)
 
@@ -257,6 +257,21 @@ preview
   
 ```
 No hay manera de ver mas. Esto es probablemente a que con pocos datos y todos entre el 0y 1 se superponen y dificultan encontrar clusters. El siguiente paso será tratar de ver si se pueden aislar determinados generos clasificando en una variable o dos y asi realizar una clasificación por etapas. 
+
+
+
+
+vuelvo con fuerzas renovadas. Me fijo que el edm sigue la misma agrupacion eliminando o añadiendo variables en los ultimos clusterings. Voy a tratar de interpretar por que se divide asi.
+
+```{r emd}
+id.edm <- results2 %>% filter(genres %in% "edm") %>% select("track.id","complete","km")
+edm.names <- id.edm$track.id %>% get_tracks()
+edm.names <- edm.names %>% select('id','name') %>% mutate(track.id = id) %>% select(-"id")
+id.edm <- left_join(id.edm,edm.names)
+id.edm <- id.edm %>% select(-"track.id")
+id.edm %>% filter( km %in% "1")
+```
+ESTOY MIRANDO GRUPO POR GRUPO QUE TIPO DE EDM HAY EN CADA UNO
 
 NEXT:
 Para seguir, repasar features key para identificar algun genero y realizar primero pruebas con eso (clutering con k=2,3 y ver si aislas ese genero).

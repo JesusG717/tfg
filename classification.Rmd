@@ -182,8 +182,8 @@ ggplot(track_part_final %>% distinct(track.id,genres,acousticness,liveness), aes
 Se observa como la acousticness es otra feature clave para reconocer la musica clasica, mientras que la liveness no aporta practicamente nada. Por tanto ahora vamos a eliminar liveness y ver que pasa.
 
 ```{r clustering3}
-df_aux <- track_part_final %>% select(-c("track.id","genres","speechiness", "loudness","liveness"))
-k <- 7
+df_aux <- track_part_final %>% select(-c("track.id","genres","speechiness", "loudness","liveness","fifths"))
+k <- 5
 Km <- df_aux %>% kmeans(k,iter.max = 20)
 comp <- df_aux %>% dist() %>% hclust(method = 'complete') %>% cutree(k)
 
@@ -227,36 +227,103 @@ Cosas que se pueden deducir:
   valencia muy baja para la clasica, puede que sea la clave para diferenciar el trap del resto
   fifths muestra que casi todos os generos tienden a dos zonas mientras que edm y pop se concentran en el centro        (puede ser util para agruparlos)
   
-  Vamos a hacer otro intento de distinguir el edm. Para ello usamos instrumentalness y fifths.
+  Vamos a hacer otro intento de distinguir el edm. 
   
 ```{r edm distinto}
-track_part_final %>% select(c("instrumentalness","fifths")) %>% NbClust(, method = 'kmeans',index = "silhouette")
-#ve siempre 2
-k <- 2
-km <- track_part_final %>% select(c("instrumentalness","fifths")) %>% kmeans(k,nstart = 20)
-comp <- track_part_final %>% select(c("instrumentalness","fifths")) %>% dist() %>% hclust(method = 'complete') %>%
-  cutree(k)
-results4 <- track_part_final %>% mutate(km = factor(km$cluster),complete = factor(comp))
+edm <- track_part_final %>% filter(genres == "edm") %>% select(-genres)
 
-summary(results4)
 
-#km_bars <- ggplot(results,aes(km,group = genres, fill = genres)) + geom_bar(position="dodge")+theme_bw() + 
-  #labs(title = 'K-means')
-km_bars4 <- ggplot(results4,aes(km,group = genres, color = genres,fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'K-means') +
-  facet_grid(~genres)
+#particion con PCA
+pca_edm <- track_part_final %>% filter(genres == 'edm') %>% select(-track.id,-genres) %>% prcomp()
+summary(pca_edm)
+pca_df <- pca_edm$x %>% as.tibble() %>% select(PC1,PC2,PC3)
+PCA1 <-pca_df %>% ggplot(aes(PC1,PC2)) + geom_point() + theme_bw()
 
-complete_bars4 <- ggplot(results4,aes(complete,group = genres, color = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'Complete') + 
-  facet_grid(~genres)
 
-preview <- ggplot(results4,aes(instrumentalness,fifths, color =genres)) +geom_point() + theme_bw()
-km_bars4
-complete_bars4
-preview
-  
+
+
+
+#sapply(edm, sd)
+#danceability           energy         loudness      speechiness     acousticness 
+#0.11463229       0.09392507       0.04686151       0.06960510       0.11831160 
+#instrumentalness         liveness          valence            tempo           fifths 
+#      0.36485364       0.17446952       0.25143273       0.07270524       0.13652581 
+
+#instrumentalness y valence
+
+edm.clust <- track_part_final %>% filter(genres == 'edm') %>% select(-track.id,-genres) %>% kmeans(2)
+edm.results <- edm %>% select("track.id") %>% mutate(km = as.factor(edm.clust$cluster))
+
+edm.tracks <- get_tracks(edm.results$track.id) %>% select("name") %>% mutate(track.id = edm$track.id)
+edm.results <- edm.results %>% left_join(edm.tracks)
+edm.results %>% filter(km == 1) %>% left_join(track_part_final, by = 'track.id') %>% select(-track.id,-km,-name,-genres) %>% pivot_longer(everything()) %>% mutate(name = as.factor(name)) %>% ggplot(aes(value, color = name)) + geom_density()+theme_bw()
+edm.results %>% filter(km == 2) %>% left_join(track_part_final, by = 'track.id') %>% select(-track.id,-km,-name,-genres) %>% pivot_longer(everything()) %>% mutate(name = as.factor(name)) %>% ggplot(aes(value, color = name)) + geom_density()+theme_bw()
+
+gap <- track_part_final %>% filter(genres == 'edm') %>% select(-track.id,-genres) %>% clusGap(FUN = kmeans, K.max = 8)
+
+plot(gap, xlab = 'número de clusters')
+
+
+
+
+plot_pca <- as.tibble(pca_edm$sdev) %>% mutate(PCA = c(1:10))
+ggplot(plot_pca, aes(PCA,value)) + geom_point() + theme_bw()
+
+C_GK<- pca_df %>% Fclust(2,'GK')
+plot_gk <- plot.fclust(C_GK,ucex = TRUE, pca = TRUE)
+
+
+edm.results %>% filter(km == 2) %>% select(name) %>% print(50)
 ```
-No hay manera de ver mas. Esto es probablemente a que con pocos datos y todos entre el 0y 1 se superponen y dificultan encontrar clusters. El siguiente paso será tratar de ver si se pueden aislar determinados generos clasificando en una variable o dos y asi realizar una clasificación por etapas. 
+la pca en el edm da que se disitnguen makineo y normal, voy a justificar por que no usar la PCA3 y luego dar clustering del PCA2.
+```{r edm2}
+ track_part_final %>% filter(genres == 'edm') %>% ggplot(aes(liveness)) + geom_density() + theme_bw()
+# pca_km <- pca_df %>% select(PC1,PC2) %>% NbClust(method = 'kmeans', distance = 'euclidean',index='ch', max.nc = 2)
+# pca_comp <- pca_df %>% select(PC1,PC2) %>% NbClust(method = 'complete', distance = 'euclidean',index='ch')
+# edm.results_pca <- edm %>% select("track.id") %>% mutate(km = as.factor(pca_km$Best.partition), comp = as.factor(pca_comp$Best.partition))
+# graphics_pca <- edm.results_pca %>% left_join(track_part_final)
+# graphics_pca %>% select(-track.id) %>% ggplot(aes(instrumentalness,valence, color = km)) +geom_point()+ theme_bw()
+C_GK<- pca_df %>% Fclust(2,'GK')
+plot_gk <- plot.fclust(C_GK,ucex = TRUE, pca = FALSE)
+
+fuzzy.edm.df <- C_GK$U %>% as.tibble() %>% mutate(data = factor(c(1:nrow(pca_df))))
+save(fuzzy.edm.df, file = 'fuzzy_edm_df.Rdata')
+
+
+```
+
+
+
+Ya la ultimo es ver solo rock y permanent wave.
+
+```{r rock wave}
+subset <- track_part_final %>% filter(genres == c("rock","permanent wave"))
+pca_s <- subset %>% select(-track.id,-genres) %>% prcomp()
+km <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'kmeans', distance = 'euclidean', index = 'ch')
+comp <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'complete', distance = 'euclidean', index = 'ch')
+
+
+results <- subset %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
+km_plot1 <- results %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'K means') +
+  facet_grid(~genres)
+km_plot2 <- results %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'K means') +
+  facet_grid(~genres)
+comp_plot <- results %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'Complete') +
+  facet_grid(~genres)
+km_plot1
+km_plot2
+comp_plot
+
+# track_name <- results %>% filter(km == 1) %>% select(track.id,genres)
+# track_name$track.id %>% get_tracks() %>% select(id,name) %>% mutate(track.id = id) %>% right_join(track_name)
+
+test1 <- results %>% left_join(track_part_final)
+kruskal.test(test1 %>% select(-track.id,-genres,-km,-comp),test1$km)
+
+```
 
 NEXT:
 Para seguir, repasar features key para identificar algun genero y realizar primero pruebas con eso (clutering con k=2,3 y ver si aislas ese genero).

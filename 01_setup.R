@@ -27,3 +27,11 @@ library('factoextra')
 library('GGally')
 #hacer treemaps
 library('treemapify')
+
+#SPOTIFY
+library('spotifyr')
+Sys.setenv(SPOTIFY_CLIENT_ID = '44855249207d40619183b073132a6407')
+Sys.setenv(SPOTIFY_CLIENT_SECRET = '2296850888224ff0bb4e35ad23962578')
+access_token <- get_spotify_access_token()
+#autorizar a coger datos de usuario
+aut <- get_spotify_authorization_code()

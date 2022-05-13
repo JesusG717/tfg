@@ -308,7 +308,7 @@ km_plot1 <- results %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = ge
   labs(title = 'K means') +
   facet_grid(~genres)
 km_plot2 <- results %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'K means') +
+  labs(title = 'Clustering (K-means & Complete)') +
   facet_grid(~genres)
 comp_plot <- results %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'Complete') +

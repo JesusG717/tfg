@@ -297,7 +297,7 @@ save(fuzzy.edm.df, file = 'fuzzy_edm_df.Rdata')
 Ya la ultimo es ver solo rock y permanent wave.
 
 ```{r rock wave}
-subset <- track_part_final %>% filter(genres %in% c("rock","permanent wave")) %>% distinct(track.id,genres, .keep_all = TRUE)
+subset <- track_part_final %>% filter(genres %in% c("rock","permanent wave")) %>% distinct(track.id, .keep_all = TRUE)
 pca_s <- subset %>% select(-track.id,-genres) %>% prcomp()
 km <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'kmeans', distance = 'euclidean', index = 'ch')
 comp <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'complete', distance = 'euclidean', index = 'ch')
@@ -315,19 +315,66 @@ km_plot1
 
 comp_plot
 
-track_name <- results %>% filter(comp == 4) %>% select(track.id,genres)
-track_name$track.id %>% get_tracks() %>% select(id,name) %>% mutate(track.id = id) %>% right_join(track_name)
+# track_name <- results %>% filter(comp == 4) %>% select(track.id,genres)
+# track_name$track.id %>% get_tracks() %>% select(id,name) %>% mutate(track.id = id) %>% right_join(track_name)
 
-test1 <- results %>% left_join(track_part_final)
-kruskal.test(test1 %>% select(danceability,genres),test1$km)
+C_opt <- subset %>% select(-c("track.id","genres")) %>% optics()
+db <- extractDBSCAN(C_opt, 0.3) 
+
+
+
+results <- results %>%  mutate(db = factor(db$cluster))
+
+reach_plot <- ggplot_optics(C_opt, groups = results$db) + labs(title = "Reachability Plot") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+reach_plot
+
 
 ```
 
-NEXT:
-Para seguir, repasar features key para identificar algun genero y realizar primero pruebas con eso (clutering con k=2,3 y ver si aislas ese genero).
+
+Filtrado de los datos para rock y permanent wave y luego un km y comp
+
+```{r pf}
+C_opt <- subset %>% select(-c("track.id","genres")) %>% optics()
+
+
+filtro <- extractDBSCAN(C_opt,0.4)
+subset2 <- subset %>% mutate(filtro = factor(filtro$cluster))
+subset2 <- subset2 %>% filter(filtro == 1) %>% select(-filtro)
+km <- subset2 %>% select(-track.id,-genres) %>% NbClust(method = 'kmeans', distance = 'euclidean', index = 'ch')
+comp <- subset2 %>% select(-track.id,-genres) %>% NbClust(method = 'complete', distance = 'euclidean', index = 'ch')
+
+
+results <- subset2 %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
+km_plot1 <- results %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'K means') +
+  facet_grid(~genres)
+
+comp_plot <- results %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+  labs(title = 'Complete') +
+  facet_grid(~genres)
+km_plot1
+
+comp_plot
 
 
 
+```
+lo ultimo ya, mirar con el fuzzy esto para ver si los grados de pertenencia son poco claros en este caso
 
-FUTURO:
-Para interpretar los datos finales mirar cosas de matrices de confusion.
+
+
+```{r fuzzy rock}
+
+C_GK<- subset %>% select(-c("track.id","genres")) %>% Fclust(2,'GK')
+df <- as_tibble(C_GK$U) %>% mutate(data = c(1:nrow(C_GK$U)))
+names(df)[names(df)=="Clus 1"] <- "clus1"
+names(df)[names(df)=="Clus 2"] <- "clus2"
+df <- df %>% mutate(dif = abs(clus1 - clus2))
+
+U_bar <- ggplot(df, aes(x = reorder(data,-dif),dif)) + geom_bar(stat = 'identity', color = 'lightgreen', fill = 'darkgreen') + 
+  labs(y = "Diferencia entre grados de pertenenecia", x = "Datos", title = 'Comparación entre los grados de pertenencia de cada elemento') + theme_bw() + theme(axis.text.x = element_blank()) + scale_y_continuous(limits = c(0,1))
+
+U_bar
+
+```

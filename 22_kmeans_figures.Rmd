@@ -8,11 +8,11 @@ Voy a cargar una serie de datos para ejemplificar los problemas del kmeans.
 El primero es la dependencia de la aprtición inicial del resultado. Quiero coger unos datos que sean buenos para el kmeans y enseñar como en varias simulaciones da resultados muy diferentes
 
 ```{r}
-source("1_setup.R")
+source("01_setup.R")
 X<-read.arff('data/artificial/2d-3c-no123.arff')
 k<-nlevels(X$class)
 k
-source("km-kmpp.R")
+source("11_km-kmpp.R")
 #Cojo dos centros en el cluster circular
 c1 <- X %>% filter(X[1]>-1.96 & X[1]< -1.95) %>% select(c(1,2))
 c1 <- c(c1$a0,c1$a1)
@@ -22,33 +22,31 @@ c3 <- X %>% filter(X[1] > 1.34591999 & X[1] < 1.34592001) %>% select(c(1,2))
 c3 <- c(c3$a0,c3$a1)
 c_bad <- rbind(c1,c2,c3)
 X <- km_clustering_custom(X,c_bad)
-plot_bad <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_bad <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank()) + theme_bw()
 
 
 
-X <- km_clustering(X,k)
-plot_good <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+X <- km_clustering(X,k,15)
+plot_good <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) + labs(title = "Kmeans Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank()) + theme_bw()
 grid.arrange(plot_bad,plot_good,
-             ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank()),
-             ncol=3,
-             top = 'Clustering k-means con dos inicializaciones diferentes')
+             ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank()) + theme_bw(),
+             ncol=3)
 ```
 Así puedo ver una aprticipn mala que consegui repitiendo el kmeans (esta guardada como plot_bad) con otra mejor.
 
 Otro problema del kmeans es la detección de formas no circulares, así que un par de imágenes de clusters con formas no circulares estaría bien
 
 ```{r}
-source("1_setup.R")
+
 X<-read.arff('data/artificial/complex9.arff')
 k<-nlevels(X$class)
-source("km-kmpp.R")
-X <- km_clustering(X,k)
+
+X <- km_clustering(X,k,20)
 grid.arrange(ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km))
              + theme(axis.title = element_blank()) + labs(title = "Kmeans Clustering", colour = "Clusters"),
              ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class))
              + theme(axis.title = element_blank()) + labs(title = "Real Data Distribution", colour = "Clusters"),
-             ncol=2,
-             top = "Partición k-means con clusters de formas variadas y repartidos de forma heterogenea")
+             ncol=2)
 
 
 ```

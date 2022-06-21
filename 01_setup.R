@@ -27,6 +27,13 @@ library('factoextra')
 library('GGally')
 #hacer treemaps
 library('treemapify')
+#para el rand y otros comadnos cluster.stats
+library('fpc')
+
+
+
+'%!in%' <- function(x,y)!('%in%'(x,y))
+
 
 #SPOTIFY
 library('spotifyr')

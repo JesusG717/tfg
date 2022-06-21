@@ -9,7 +9,7 @@ primero un ejemplo del indice CH
 
 ```{r}
 #cargar paquetes
-source("1_setup.R")
+source("01_setup.R")
 #Quiero leer el archivo de datos primero
 dataset<-'data/artificial/diamond9.arff'
 X<-read.arff(dataset)
@@ -37,7 +37,7 @@ CH_graph <- ggplot(data = CHplotting) + geom_point(mapping = aes( x = CHplotting
   geom_line( mapping = aes( x = CHplotting[,1], y = CHplotting[,2]), color = "blue", size = 1) +
   labs(title = "CH en función del número de clusters") + 
   theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-grid.arrange(CH_graph,plot_ch, ncol=2, top = "Valores del índice CH asociados a una cierta muestra de datos")
+grid.arrange(CH_graph,plot_ch, ncol=2)
 
 
 ```
@@ -48,7 +48,7 @@ Ahora un ejemplo que con el CH sea complicado y con el SH se vea mejor
 
 ```{r}
 #cargar paquetes
-source("1_setup.R")
+source("01_setup.R")
 #Quiero leer el archivo de datos primero
 dataset<-'data/artificial/2d-4c-no4.arff'
 X<-read.arff(dataset)
@@ -86,6 +86,6 @@ SH_graph <- ggplot(data = SHplotting) + geom_point(mapping = aes( x = SHplotting
   geom_line( mapping = aes( x = SHplotting[,1], y = SHplotting[,2]), color = "green", size = 1) +
   labs(title = "Silhouette en función del número de clusters") + 
   theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-grid.arrange(SH_graph,plot_sh, ncol=2, top = "Valores del índice Silh asociados a una cierta muestra de datos")
+grid.arrange(SH_graph,plot_sh, ncol=2)
 
 ```

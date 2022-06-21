@@ -85,14 +85,10 @@ complete<- track_part_final %>% select(-c("track.id","genres")) %>% dist() %>% h
 #busco una estimacion de un buen epsilon con knn
 #FALLO no se me pinta la knn graph bien y no entiendo
 #haciendolo sin ggplot me salia mas o menos 0.2 el cambio de pendiente
-plot_knn <- track_part_final %>% select(-c("track.id","genres")) %>%  kNNdist(k = 1) %>% sort()
-N <- c(1:length(plot_knn))
-df <- data.frame(N,plot_knn)
-knn_p <- ggplot(df,aes(N,plot_knn)) + geom_point() + theme_bw()
-knn_p
 
 
-dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.17, minPts = 7)
+
+
 
 #OJO
 #esto es bastante estupido, al final siempre acabo cogiendo el epsilon y minpts que me da la gana para que cuadre
@@ -101,8 +97,7 @@ dbs <- track_part_final %>% select(-c("track.id","genres")) %>% dbscan(eps = 0.1
 
 results <- track_part_final %>% select(c("track.id","genres")) %>% mutate(km = factor(km$cluster),single = 
                                                                             factor(single), 
-                                                                          complete = factor(complete), 
-                                                                            dbs = factor(dbs$cluster))
+                                                                          complete = factor(complete))                               
 summary(results)
 
 #km_bars <- ggplot(results,aes(km,group = genres, fill = genres)) + geom_bar(position="dodge")+theme_bw() + 
@@ -116,13 +111,11 @@ single_bars <- ggplot(results,aes(single,group = genres, fill = genres)) + geom_
 complete_bars <- ggplot(results,aes(complete,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'Complete') +
   facet_grid(~genres)
-dbs_bars <- ggplot(results,aes(dbs,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
-  labs(title = 'DBSCAN') +
-  facet_grid(~genres)
+
 km_bars
 single_bars
 complete_bars
-dbs_bars
+
 ```
 Con esta primera clasificación, el dbscan es un desastre. También vemos como el single mete casi todo en el grupo 1, esto es consecuencia del mencionado chain effect y nos hace deducir que no es idoneo para estos datos. k means y complete parecen mas decentes, asi que seguiremos con esos. Sin embargo, aunque la musica clasica esta siendo diferenciada, el resto de genéros no están distribuidos de forma tan clara. vamos a buscar maneras de distinguirlos.
 
@@ -303,12 +296,12 @@ km <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'kmeans', distan
 comp <- subset %>% select(-track.id,-genres) %>% NbClust(method = 'complete', distance = 'euclidean', index = 'ch')
 
 
-results <- subset %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
+results_r <- subset %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
 km_plot1 <- results %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'K means') +
   facet_grid(~genres)
 
-comp_plot <- results %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+comp_plot <- results_r %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'Complete') +
   facet_grid(~genres)
 km_plot1
@@ -323,9 +316,9 @@ db <- extractDBSCAN(C_opt, 0.3)
 
 
 
-results <- results %>%  mutate(db = factor(db$cluster))
+results_r <- results_r %>%  mutate(db = factor(db$cluster))
 
-reach_plot <- ggplot_optics(C_opt, groups = results$db) + labs(title = "Reachability Plot") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+reach_plot <- ggplot_optics(C_opt, groups = results_r$db) + labs(title = "Reachability Plot") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 reach_plot
 
 
@@ -345,12 +338,12 @@ km <- subset2 %>% select(-track.id,-genres) %>% NbClust(method = 'kmeans', dista
 comp <- subset2 %>% select(-track.id,-genres) %>% NbClust(method = 'complete', distance = 'euclidean', index = 'ch')
 
 
-results <- subset2 %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
-km_plot1 <- results %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+results_pf <- subset2 %>% select(track.id,genres) %>% mutate(km = as.factor(km$Best.partition),comp = as.factor(comp$Best.partition))
+km_plot1 <- results_pf %>% distinct(.keep_all = TRUE)  %>% ggplot(aes(km,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'K means') +
   facet_grid(~genres)
 
-comp_plot <- results %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
+comp_plot <- results_pf %>% distinct(.keep_all = TRUE) %>% ggplot(aes(comp,group = genres, fill = genres)) + geom_bar()+theme_bw() + 
   labs(title = 'Complete') +
   facet_grid(~genres)
 km_plot1
@@ -376,5 +369,108 @@ U_bar <- ggplot(df, aes(x = reorder(data,-dif),dif)) + geom_bar(stat = 'identity
   labs(y = "Diferencia entre grados de pertenenecia", x = "Datos", title = 'Comparación entre los grados de pertenencia de cada elemento') + theme_bw() + theme(axis.text.x = element_blank()) + scale_y_continuous(limits = c(0,1))
 
 U_bar
+
+```
+
+
+Intentemos una ultima particion, esta vez cogiendo solo el genero rock, y dividiendo edm en dos el edm
+
+```{r clustering4}
+track_part_final
+subset_end <- track_part_final %>% filter(genres %!in% c('permanent wave'))
+#separar el edm
+clus_gk <- subset_end %>% filter(genres %in% c('edm')) %>% select(-c('track.id','genres')) %>% Fclust(2,type = 'gk')
+
+
+
+```
+
+
+
+
+
+
+
+VALIDACION
+toca mirar el rand index para las aprticiones. mejor dicho, el rand index ajustado de Hubert  and  Arabie. Vamos primero con la primera partición
+
+```{r rand1}
+#la variable a estudiar es results:
+#results tiene track.id genres km single complete dbs 
+results <- results %>% mutate(genres_name = genres)
+results <- results %>% mutate(genres = factor(genres))
+levels(results$genres) <- c(1:nlevels(results$genres))
+
+
+
+#los indices de la primera particion
+rand_c <- adj.rand.index(results$genres,results$complete)
+rand_km <- adj.rand.index(results$genres,results$km)
+
+#segunda particion
+results2 <- results2 %>% mutate(genres_name = genres)
+
+results2 <- results2 %>% mutate(genres = factor(genres))
+levels(results2$genres) <- c(1:nlevels(results2$genres))
+
+rand2_c <- adj.rand.index(results2$genres,results2$complete)
+rand2_km <- adj.rand.index(results2$genres,results2$km)
+
+#tercera particion
+results3 <- results3 %>% mutate(genres_name = genres)
+results3 <- results3 %>% mutate(genres = factor(genres))
+levels(results3$genres) <- c(1:nlevels(results3$genres))
+
+rand3_c <- adj.rand.index(results3$genres,results3$complete)
+rand3_km <- adj.rand.index(results3$genres,results3$km)
+
+
+
+
+#vamos a quitar los generos conflictivos
+subresults <- results %>% filter(genres_name %!in% c('edm'))
+
+#los indices de la primera particion
+rand_s2 <- adj.rand.index(subresults$genres,subresults$single)
+rand_c2 <- adj.rand.index(subresults$genres,subresults$complete)
+rand_km2 <- adj.rand.index(subresults$genres,subresults$km)
+
+#segunda particion
+subresults2 <- results2 %>% filter(genres_name %!in% c('edm'))
+
+rand2_c2 <- adj.rand.index(subresults2$genres,subresults2$complete)
+rand2_km2 <- adj.rand.index(subresults2$genres,subresults2$km)
+
+#tercera particion
+subresults3 <- results3 %>% filter(genres_name %!in% c('edm'))
+
+
+rand3_c2 <- adj.rand.index(subresults3$genres,subresults3$complete)
+rand3_km2 <- adj.rand.index(subresults3$genres,subresults3$km)
+
+
+
+
+#vamos a quitar los generos conflictivos
+subresults <- results %>% filter(genres_name %!in% c('edm','permanent wave'))
+
+#los indices de la primera particion
+rand_s3 <- adj.rand.index(subresults$genres,subresults$single)
+rand_c3 <- adj.rand.index(subresults$genres,subresults$complete)
+rand_km3 <- adj.rand.index(subresults$genres,subresults$km)
+
+#segunda particion
+subresults2 <- results2 %>% filter(genres_name %!in% c('edm','permanent wave'))
+
+rand2_c3 <- adj.rand.index(subresults2$genres,subresults2$complete)
+rand2_km3 <- adj.rand.index(subresults2$genres,subresults2$km)
+
+#tercera particion
+subresults3 <- results3 %>% filter(genres_name %!in% c('edm','permanent wave'))
+
+
+rand3_c3 <- adj.rand.index(subresults3$genres,subresults3$complete)
+rand3_km3 <- adj.rand.index(subresults3$genres,subresults3$km)
+
 
 ```

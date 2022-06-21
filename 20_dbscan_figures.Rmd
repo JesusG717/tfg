@@ -11,7 +11,7 @@ Para ello uso un set que vimos antes que con kmeans fallaba
 ```{r}
 
 #cargar paquetes
-source("1_setup.R")
+
 #Quiero leer el archivo de datos primero
 dataset<-'data/artificial/complex9.arff'
 X<-read.arff(dataset)
@@ -20,12 +20,13 @@ epsilon <- 12 #bastante arbitrario de momento
 MinPts <- 4 #numero variables*2
 C_dbs <- X %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 X <- mutate(X, dbs = factor(C_dbs$cluster))
+
 plot_dbs <- ggplot(data = X) + geom_point(mapping = aes(x = X[,1], y = X[,2], colour = dbs)) +
   labs(title = "DBSCAN Clustering", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 plot_dbs
 plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 
-grid.arrange(plot_dbs, plot_real, ncol = 2, top = 'Partición de una muestra artificial con DBSCAN')
+grid.arrange(plot_dbs, plot_real, ncol = 2)
 
 ```
 
@@ -35,11 +36,10 @@ Ahora un ejemplo de una particion a la que le hago kmeans, y luego hago kmeans d
 ```{r}
 plot_km <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = km)) +
   labs(title = "K means sin filtrado", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-plot_km_filtro <- ggplot(data = X_Filter)+geom_point(mapping = aes(x = X_Filter[,1], y = X_Filter[,2], color = km)) + labs(title = "K means con filtrado previo", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
+plot_km_filtro <- ggplot(data = X_Filter)+geom_point(mapping = aes(x = X_Filter[,1], y = X_Filter[,2], color = km)) + labs(title = "K means con filtrado", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 
-grid.arrange(plot_km,plot_km_filtro,plot_real,ncol=3, top ='Efecto del filtrado de ruido por densidad')
-
+plot_km + plot_km_filtro + plot_real
 
 ```
 
@@ -49,8 +49,8 @@ PARTE OPTICS
 figura en la que se ve una aprticion de densidad variable donde dbscan falla
 
 ```{r}
-source('vary_density_data.R')
-source('dbscan.R')
+source('30_vary_density_data.R')
+source('12_dbscan.R')
 
 
 epsilon <- 0.5 #bastante arbitrario de momento
@@ -64,7 +64,7 @@ C_dbs <- D %>% select(c(1,2)) %>% dist() %>% dbscan(epsilon,MinPts)
 D <- mutate(D, dbs = factor(C_dbs$cluster))
 plot_dbs_2 <- ggplot(data = D) + geom_point(mapping = aes(x = D[,1], y = D[,2], colour = dbs)) + labs(title = "DBSCAN epsilon = 0.2", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 plot_real <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3, top = 'DBSCAN (MinPts = 15) en una partición con densidad variable')
+grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3)
 ```
 
 
@@ -73,8 +73,8 @@ grid.arrange(plot_dbs_1,plot_dbs_2,plot_real,ncol = 3, top = 'DBSCAN (MinPts = 1
 Ahora el ejemplo de antes pero con OPTICS para ver que funciona bien
 
 ```{r}
-source('vary_density_data.R')
-source('dbscan.R')
+source('30_vary_density_data.R')
+source('12_dbscan.R')
 
 
 opt <- D %>% select(c(1,2)) %>% optics(,minPts = 15)
@@ -84,5 +84,4 @@ plot_opt <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], colo
 reach_plot <- ggplot_optics(C_opt, groups = D$class) + labs(title = "Reachability Plot", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 
 plot_real <- ggplot(data = D)+geom_point(mapping = aes(x = D[,1], y = D[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-grid.arrange(reach_plot,plot_real,ncol=2,top='Optics en un conjunto de densidad variable')
-```
+grid.arrange(reach_plot,plot_real,ncol=2)

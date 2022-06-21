@@ -19,29 +19,27 @@ Primero pongo un ejemplo de dendrograma y una clasificación jerárquica. Busque
   plot_h <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc)) +
     labs(title = "Partición para k = 7", colour = "Clusters") + theme(axis.title = element_blank())
   plot_real <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(title = "Real Data Distribution", colour = "Clusters") + theme(axis.title.x = element_blank(), axis.title.y = element_blank())
-  grid.arrange(plot_h,dend,plot_real,ncol = 3, top ='Clustering Jerárquico para un k conocido con su dendrograma asociado')
+  grid.arrange(plot_h,dend,ncol = 2)
  
 ```
 Quiero ver el chain effect del single link y como el complete link lo hace mejor en esos casos
 
 ```{r}
-source("1_setup.R")
+
 #Quiero leer el archivo de datos primero
 dataset<-'data/artificial/diamond9.arff'
 X<-read.arff(dataset)
-source("hclust.R")
+source("10_hclust.R")
 
 method<-'single' #metodos: complete, single, average, centroids
-X <- h_clustering(X,method)
+X <- h_clustering(X,method,9)
 #solucion del jerarquico
 plot_h_s <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc)) + labs(colour = "Clusters", title = "Single Link") + theme(axis.title = element_blank())
-source("hclust.R")
-
 method<-'complete' #metodos: complete, single, average, centroids
-X <- h_clustering(X,method)
+X <- h_clustering(X,method,9)
 #solucion del jerarquico
 plot_h_c <- ggplot(data = X)+geom_point(mapping = aes(x = X[,1], y = X[,2], color = hc)) + labs(colour = "Clusters", title = "Complete Link") + theme(axis.title = element_blank())
 grid.arrange(plot_h_c,plot_h_s,
              ggplot(data = X) + geom_point(mapping = aes(x = X[,1], y = X[,2], color = class)) + labs(colour = "Clusters", title = "Real Data Distribution") + theme(axis.title = element_blank()),
-             ncol = 3, top = "Comparación entre Single y Complete link")
+             ncol = 3)
 ```
